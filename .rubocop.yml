@@ -1,0 +1,46 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-minitest
+
+AllCops:
+  NewCops: enable
+
+Layout/LineLength:
+  Max: 140
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*.rb'
+
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+Bundler/OrderedGems:
+  TreatCommentsAsGroupSeparators: true
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Layout/ArrayAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  SafeAutoCorrect: true
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/HashSyntax:
+  Enabled: true
+  EnforcedShorthandSyntax: always
