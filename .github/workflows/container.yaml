@@ -1,0 +1,61 @@
+---
+name: Publish OCI Container
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      tag:
+        description: 'The tag to use for the container image'
+        required: false
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The tag to use for the container image'
+        required: false
+        type: string
+jobs:
+  publish_github:
+    name: Publish the container image to GitHub Container Registry
+    runs-on: ubuntu-latest
+    strategy:
+      # Go hard on the builders
+      max-parallel: 5
+      matrix:
+        alpine-version: ['3.20']
+        ruby-version: ['3.4.1']
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Publish to ghcr.io
+        env:
+          ALPINE_VERSION: ${{ matrix.alpine-version }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUBY_VERSION: ${{ matrix.ruby-version }}
+          TAG: ${{ github.event.inputs.tag || '' }}
+          TRACE: ${{ secrets.ACTIONS_STEP_DEBUG || 'false' }}
+        # yamllint disable rule:line-length
+        run: |
+          if [ -z "$TAG" ]
+          then
+              [ "$TRACE" = true ] && printf 'No tag provided, getting tag from .version.txt\n' >&2
+              if [ -f ".version.txt" ]
+              then
+                  version=$(<.version.txt)
+              else
+                  [ "$TRACE" = true ] && printf 'No .version.txt found, getting version from git describe --tags --abbrev=0\n' >&2
+                  version=$(git describe --tags --abbrev=0)
+              fi
+          else
+              [ "$TRACE" = true ] && printf 'Using provided tag %s\n' "$TAG" >&2
+              version=$TAG
+          fi
+          [ "$TRACE" = 'true' ] && printf 'Calling ./ci/build_image.sh -vvp "%s"\n' "$version" >&2
+          IMAGE_NAME=$(basename "$GITHUB_REPOSITORY")  \
+          GITHUB_TOKEN=$REGISTRY_TOKEN \
+          ALPINE_VERSION=$ALPINE_VERSION \
+          RUBY_VERSION=$RUBY_VERSION \
+            ./ci/build_image.sh -vvp "$version"
+        # yamllint enable rule:line-length
+        shell: bash

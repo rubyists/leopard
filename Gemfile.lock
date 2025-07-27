@@ -1,0 +1,101 @@
+PATH
+  remote: .
+  specs:
+    leopard (0.1.0)
+      nats-pure (~> 2.5)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ast (2.4.3)
+    base64 (0.3.0)
+    coderay (1.1.3)
+    concurrent-ruby (1.3.5)
+    docile (1.4.1)
+    io-console (0.8.1)
+    json (2.13.1)
+    language_server-protocol (3.17.0.5)
+    lint_roller (1.1.0)
+    method_source (1.1.0)
+    minitest (5.25.5)
+    minitest-global_expectations (1.0.1)
+      minitest (> 5)
+    nats-pure (2.5.0)
+      base64
+      concurrent-ruby (~> 1.0)
+      json
+      securerandom
+      uri
+    parallel (1.27.0)
+    parser (3.3.9.0)
+      ast (~> 2.4.1)
+      racc
+    prism (1.4.0)
+    pry (0.15.2)
+      coderay (~> 1.1)
+      method_source (~> 1.0)
+    racc (1.8.1)
+    rainbow (3.1.1)
+    rake (13.3.0)
+    regexp_parser (2.10.0)
+    reline (0.6.2)
+      io-console (~> 0.5)
+    rubocop (1.79.0)
+      json (~> 2.3)
+      language_server-protocol (~> 3.17.0.2)
+      lint_roller (~> 1.1.0)
+      parallel (~> 1.10)
+      parser (>= 3.3.0.2)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 2.9.3, < 3.0)
+      rubocop-ast (>= 1.46.0, < 2.0)
+      ruby-progressbar (~> 1.7)
+      tsort (>= 0.2.0)
+      unicode-display_width (>= 2.4.0, < 4.0)
+    rubocop-ast (1.46.0)
+      parser (>= 3.3.7.2)
+      prism (~> 1.4)
+    rubocop-minitest (0.38.1)
+      lint_roller (~> 1.1)
+      rubocop (>= 1.75.0, < 2.0)
+      rubocop-ast (>= 1.38.0, < 2.0)
+    rubocop-performance (1.25.0)
+      lint_roller (~> 1.1)
+      rubocop (>= 1.75.0, < 2.0)
+      rubocop-ast (>= 1.38.0, < 2.0)
+    rubocop-rake (0.7.1)
+      lint_roller (~> 1.1)
+      rubocop (>= 1.72.1)
+    ruby-progressbar (1.13.0)
+    securerandom (0.4.1)
+    simplecov (0.22.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-html (0.13.2)
+    simplecov_json_formatter (0.1.4)
+    tsort (0.2.0)
+    unicode-display_width (3.1.4)
+      unicode-emoji (~> 4.0, >= 4.0.4)
+    unicode-emoji (4.0.4)
+    uri (1.0.3)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  leopard!
+  minitest
+  minitest-global_expectations
+  pry
+  rake
+  reline
+  rubocop
+  rubocop-minitest
+  rubocop-performance
+  rubocop-rake
+  simplecov
+
+BUNDLED WITH
+   2.6.9

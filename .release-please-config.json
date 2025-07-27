@@ -1,0 +1,32 @@
+{
+  "packages": {
+    ".": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "simple",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "draft": false,
+      "prerelease": false,
+      "version-file": ".version.txt",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "lib/sequel/pgt_outbox/version.rb"
+        },
+        {
+          "type": "generic",
+          "path": "oci/Gemfile"
+        }
+      ],
+      "exclude-paths": [
+        ".release-please-manifest.json",
+        ".version.txt",
+        "lib/sequel/pgt_outbox/version.rb",
+        ".rubocop.yml",
+        ".overcommit.yml",
+        "coverage/coverage.json"
+      ]
+    }
+  },
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+}

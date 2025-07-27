@@ -1,0 +1,34 @@
+---
+name: Publish Ruby Gem
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+  workflow_dispatch:
+jobs:
+  publish_gem:
+    name: Publish the gem to registries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        registry:
+          - key: rubygems
+            secret: RUBYGEMS_TOKEN
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.4.1
+          bundler-cache: false
+      -
+        name: Publish to ${{ matrix.registry }}
+        env:
+          TRACE: ${{ secrets.ACTIONS_STEP_DEBUG || 'false' }}
+          GEM_TOKEN: ${{ secrets[matrix.registry.secret] }}
+          REGISTRY: ${{ matrix.registry.key }}
+        run: |
+          bundle install
+          TRACE="$TRACE" GEM_TOKEN="$GEM_TOKEN" ./ci/publish-gem.sh "$REGISTRY"
+        shell: bash

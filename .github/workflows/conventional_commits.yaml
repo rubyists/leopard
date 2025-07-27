@@ -1,0 +1,63 @@
+---
+name: Conventional Commits And PR titles
+
+on:  # yamllint disable-line rule:truthy
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  comventional_commits:
+    name: Validate Commit Subjects
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: webiny/action-conventional-commits@v1.3.0
+        name: Validate Commit Subjects
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # All of the Angular commit types are allowed by default.
+          # Added types to this:
+          #   * eyes - For observability related changes
+          #   * sec  - For security related changes
+          allowed-commit-types: "build,chore,ci,docs,eyes,feat,fix,perf,refactor,revert,sec,style,test"  # yamllint disable-line rule:line-length
+  conventional_pr_title:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      -
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: validate-pr-title
+        name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        with:
+          # All of the Angular commit types are allowed by default.
+          # Added types to this:
+          #   * eyes - For observability related changes
+          #   * sec  - For security related changes
+          types: |
+            build
+            chore
+            ci
+            docs
+            eyes
+            feat
+            fix
+            perf
+            refactor
+            revert
+            sec
+            style
+            test
+    # We don't enforce scopes
+    #      scopes:
+    #      - frontend
+    #      - backend
+    #      - ci
+    # We don't disallow any scopes
+    #      disallowScopes: |
+    #        release
+          wip: true
