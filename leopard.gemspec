@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ['bougyman@users.noreply.github.com']
 
   spec.summary = 'A server to supervise concurrent NATS ServiceApi workers.'
-  spec.description = 'Leopard is a puma-like server for managing concurrent NATS ServiceApi endpoint workers' # rubocop:disable Layout/LineLength
+  spec.description = 'Leopard is a puma-like server for managing concurrent NATS ServiceApi endpoint workers'
   spec.homepage = 'https://github.com/rubyists/leopard'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.3.0'
