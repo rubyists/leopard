@@ -1,0 +1,9 @@
+# Leopard Nats ServiceApi Server
+bougyman <me@bougyman.com>
+:service-api: https://github.com/rubyists/nats-pure.rb/blob/main/docs/service_api.md
+
+The leopard nats serviceapi server provides a simple concurrency
+model for NATS {service-api} workers. It is designed to be used
+similarly to a web server (inspired by puma), defining endpoints
+in your classes, and then serving them via the leopard (Ractor-based)
+service supervisor.
