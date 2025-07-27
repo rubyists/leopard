@@ -1,0 +1,17 @@
+---
+name: Publish
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  gem:
+    name: Build and publish gem
+    uses: ./.github/workflows/gem.yaml
+    secrets: inherit
+
+#  containers:
+#    name: Build and publish OCI container images
+#    uses: ./.github/workflows/container.yaml
+#    secrets: inherit
