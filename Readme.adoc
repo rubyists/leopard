@@ -1,9 +1,104 @@
-# Leopard Nats ServiceApi Server
+= Leopard NATS ServiceApi Server
 bougyman <me@bougyman.com>
-:service-api: https://github.com/rubyists/nats-pure.rb/blob/main/docs/service_api.md[Service API]
+:service-api: https://github.com/rubyists/nats-pure.rb/blob/main/docs/service_api.md[NATS Service API]
+:conventional-commits: https://www.conventionalcommits.org/en/v1.0.0/[Conventional Commits]
 
-The leopard nats serviceapi server provides a simple concurrency
-model for NATS {service-api} workers. It is designed to be used
-similarly to a web server (inspired by puma), defining endpoints
-in your classes, and then serving them via the leopard (Ractor-based)
-service supervisor.
+Leopard is a small framework for building concurrent {service-api} workers.
+It uses `Ractor` to manage multiple workers in a single process and provides a
+minimal DSL for defining endpoints and middleware.
+
+== Features
+
+* Declarative endpoint definitions with `endpoint`.
+* Middleware support using `use`.
+* Simple concurrency via `run` with a configurable number of instances.
+* JSON aware message wrapper that gracefully handles parse errors.
+* Dry::Configurable settings container (currently exposing `root` and `libroot` paths).
+
+== Requirements
+
+* Ruby >= 3.3.0
+* A running NATS server with the Service API enabled.
+
+== Installation
+
+Add the gem to your project:
+
+[source,ruby]
+----
+# Gemfile
+gem 'leopard'
+----
+
+Then install it with Bundler.
+
+[source,bash]
+----
+$ bundle install
+----
+
+== Usage
+
+Create a service class and include `Rubyists::Leopard::NatsApiServer`.
+Define one or more endpoints. Each endpoint receives a
+`Rubyists::Leopard::MessageWrapper` object.
+
+[source,ruby]
+----
+class EchoService
+  include Rubyists::Leopard::NatsApiServer
+
+  endpoint :echo do |msg|
+    Success(msg.data)
+  end
+end
+----
+
+Run the service by providing the NATS connection details and service options:
+
+[source,ruby]
+----
+EchoService.run(
+  nats_url: 'nats://localhost:4222',
+  service_opts: { name: 'echo' },
+  instances: 4
+)
+----
+
+Middleware can be inserted around endpoint dispatch:
+
+[source,ruby]
+----
+class LoggerMiddleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(wrapper)
+    puts "received: #{wrapper.data.inspect}"
+    @app.call(wrapper)
+  end
+end
+
+EchoService.use LoggerMiddleware
+----
+
+== Development
+
+The project uses Minitest and RuboCop. Run tests with Rake:
+
+[source,bash]
+----
+$ bundle exec rake
+----
+
+=== Conventional Commits (semantic commit messages)
+
+This project follows the {conventional-commits} specification.
+
+To contribute, please follow that commit message format,
+or your pull request may be rejected.
+
+== License
+
+MIT
