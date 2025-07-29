@@ -35,6 +35,7 @@ Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency 'dry-configurable', '~> 1.3'
+  spec.add_dependency 'dry-monads', '~> 1.9'
   spec.add_dependency 'nats-pure', '~> 2.5'
 
   # For more information and examples about making a new gem, check out our
