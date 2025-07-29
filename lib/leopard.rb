@@ -11,10 +11,9 @@ end
 
 module Rubyists
   module Leopard
-    extend Dry::Configurable
   end
 end
 
+require_relative 'leopard/settings'
 require_relative 'leopard/version'
 require_relative 'leopard/errors'
-require_relative 'leopard/settings'
