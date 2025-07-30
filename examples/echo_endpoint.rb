@@ -6,8 +6,11 @@ require_relative '../lib/leopard/nats_api_server'
 # Example to echo the given message
 class EchoService
   include Rubyists::Leopard::NatsApiServer
+  include SemanticLogger::Loggable
+  include Dry::Monads[:result]
+  extend Dry::Monads[:result]
 
-  endpoint :echo, &:data
+  endpoint(:echo) { |msg| Success(msg.data) }
 end
 
 if __FILE__ == $PROGRAM_NAME

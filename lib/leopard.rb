@@ -2,6 +2,8 @@
 
 require 'dry/configurable'
 require 'pathname'
+require 'semantic_logger'
+SemanticLogger.add_appender(io: $stdout, formatter: :color)
 
 class Pathname
   def /(other)

@@ -10,6 +10,7 @@ module Rubyists
   module Leopard
     module NatsApiServer
       include Dry::Monads[:result]
+      extend Dry::Monads[:result]
 
       def self.included(base)
         base.extend(ClassMethods)
@@ -107,14 +108,16 @@ module Rubyists
           result  = instance_exec(wrapper, &handler)
           process_result(wrapper, result)
         rescue StandardError => e
+          logger.error 'Error processing message: ', e
           wrapper.respond_with_error(e.message)
         end
 
         def process_result(wrapper, result)
           case result
-          in Success
+          in Dry::Monads::Success
             wrapper.respond(result.value!)
-          in Failure
+          in Dry::Monads::Failure
+            logger.error 'Error processing message: ', result.failure
             wrapper.respond_with_error(result.failure)
           end
         end
