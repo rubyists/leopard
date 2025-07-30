@@ -22,7 +22,7 @@ jobs:
           # Added types to this:
           #   * eyes - For observability related changes
           #   * sec  - For security related changes
-          allowed-commit-types: "build,chore,ci,docs,eyes,feat,fix,perf,refactor,revert,sec,style,test"  # yamllint disable-line rule:line-length
+          allowed-commit-types: "build,chore,ci,doc,documentation,docs,eyes,feat,fix,perf,refactor,revert,sec,style,test"  # yamllint disable-line rule:line-length
   conventional_pr_title:
     name: Validate PR title
     runs-on: ubuntu-latest
@@ -42,6 +42,8 @@ jobs:
             build
             chore
             ci
+            doc
+            documentation
             docs
             eyes
             feat
