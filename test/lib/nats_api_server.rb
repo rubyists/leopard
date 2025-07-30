@@ -19,14 +19,31 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     blk = proc {}
     @klass.endpoint(:foo, &blk)
 
-    assert_equal [{ name: :foo, subject: :foo, queue: nil, handler: blk }], @klass.endpoints
+    assert_equal [{ name: :foo, subject: :foo, queue: nil, group: nil, handler: blk }],
+      @klass.endpoints
   end
 
   it 'registers an endpoint with options' do
     blk = proc {}
     @klass.endpoint(:foo, subject: 'bar', queue: 'q', &blk)
 
-    assert_equal [{ name: :foo, subject: 'bar', queue: 'q', handler: blk }], @klass.endpoints
+    assert_equal [{ name: :foo, subject: 'bar', queue: 'q', group: nil, handler: blk }],
+      @klass.endpoints
+  end
+
+  it 'registers a group' do
+    @klass.group :math, queue: 'math'
+
+    assert_equal({ math: { name: :math, parent: nil, queue: 'math' } }, @klass.groups)
+  end
+
+  it 'registers an endpoint with a group' do
+    blk = proc {}
+    @klass.group :math
+    @klass.endpoint(:add, group: :math, &blk)
+
+    assert_equal [{ name: :add, subject: :add, queue: nil, group: :math, handler: blk }],
+      @klass.endpoints
   end
 
   it 'adds middleware' do
