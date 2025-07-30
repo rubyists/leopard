@@ -15,6 +15,7 @@ module Rubyists
       def self.included(base)
         base.extend(ClassMethods)
         base.extend(Dry::Monads[:result])
+        base.include(SemanticLogger::Loggable)
       end
 
       module ClassMethods
@@ -41,6 +42,7 @@ module Rubyists
         end
 
         def run(nats_url:, service_opts:, instances: 4)
+          logger.info 'Booting NATS API server...'
           spawn_instances(nats_url, service_opts, instances)
           sleep
         end
