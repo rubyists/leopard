@@ -34,6 +34,7 @@ Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
   spec.require_paths = ['lib']
 
   # Uncomment to register a new dependency of your gem
+  spec.add_dependency 'concurrent-ruby', '~> 1.1'
   spec.add_dependency 'dry-configurable', '~> 1.3'
   spec.add_dependency 'dry-monads', '~> 1.9'
   spec.add_dependency 'nats-pure', '~> 2.5'

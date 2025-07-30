@@ -2,6 +2,7 @@
 
 require 'nats/client'
 require 'dry/monads'
+require 'concurrent'
 require_relative 'message_wrapper'
 
 module Rubyists
@@ -32,19 +33,19 @@ module Rubyists
         private
 
         def spawn_instances(url, opts, count)
-          Array.new(count) { spawn_ractor(url, opts) }
-        end
-
-        def spawn_ractor(url, opts)
-          eps = endpoints.dup
-          Ractor.new(url, opts, eps) { |u, o, e| setup_worker(u, o, e) }
+          pool = Concurrent::FixedThreadPool.new(count)
+          count.times do
+            eps = endpoints.dup
+            pool.post { setup_worker(url, opts, eps) }
+          end
+          pool
         end
 
         def setup_worker(url, opts, eps)
           client  = NATS.connect url
           service = client.services.add(**opts)
           add_endpoints service, eps
-          # The main Ractor can just go to sleep
+          # Keep the worker thread alive
           sleep
         end
 

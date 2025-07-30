@@ -17,3 +17,4 @@ end
 require_relative 'leopard/settings'
 require_relative 'leopard/version'
 require_relative 'leopard/errors'
+require_relative 'leopard/nats_api_server'
