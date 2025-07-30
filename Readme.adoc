@@ -44,7 +44,7 @@ $ bundle install
 
 Create a service class and include `Rubyists::Leopard::NatsApiServer`.
 Define one or more endpoints. Each endpoint receives a
-`Rubyists::Leopard::MessageWrapper` object.
+`Rubyists::Leopard::MessageWrapper` object for each request to the {service-api} endpoint that service class is is subscribed to (subject:, or name:).
 
 [source,ruby]
 ----
