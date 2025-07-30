@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/leopard'
+require_relative '../lib/leopard/nats_api_server'
 
 # Example to echo the given message
 class EchoService

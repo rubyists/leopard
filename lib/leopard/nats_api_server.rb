@@ -3,6 +3,7 @@
 require 'nats/client'
 require 'dry/monads'
 require 'concurrent'
+require_relative '../leopard'
 require_relative 'message_wrapper'
 
 module Rubyists
@@ -39,6 +40,7 @@ module Rubyists
 
         def run(nats_url:, service_opts:, instances: 4)
           spawn_instances(nats_url, service_opts, instances)
+          sleep
         end
 
         private
