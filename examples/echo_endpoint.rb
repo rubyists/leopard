@@ -7,8 +7,6 @@ require_relative '../lib/leopard/nats_api_server'
 class EchoService
   include Rubyists::Leopard::NatsApiServer
   include SemanticLogger::Loggable
-  include Dry::Monads[:result]
-  extend Dry::Monads[:result]
 
   endpoint(:echo) { |msg| Success(msg.data) }
 end

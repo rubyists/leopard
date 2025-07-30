@@ -14,6 +14,7 @@ module Rubyists
 
       def self.included(base)
         base.extend(ClassMethods)
+        base.extend(Dry::Monads[:result])
       end
 
       module ClassMethods
