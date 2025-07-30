@@ -5,7 +5,7 @@ bougyman <me@bougyman.com>
 :dry-configurable: https://github.com/dry-rb/dry-configurable[Dry::Configurable]
 
 Leopard is a small framework for building concurrent {service-api} workers.
-It uses `Ractor` to manage multiple workers in a single process and provides a
+It uses `Concurrent::FixedThreadPool` to manage multiple workers in a single process and provides a
 minimal DSL for defining endpoints and middleware.
 
 == Features
