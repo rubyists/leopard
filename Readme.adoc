@@ -3,6 +3,7 @@ bougyman <me@bougyman.com>
 :service-api: https://github.com/rubyists/nats-pure.rb/blob/main/docs/service_api.md[NATS Service API]
 :conventional-commits: https://www.conventionalcommits.org/en/v1.0.0/[Conventional Commits]
 :dry-configurable: https://github.com/dry-rb/dry-configurable[Dry::Configurable]
+:dry-monads: https://github.com/dry-rb/dry-monads[Dry::Monads]
 
 Leopard is a small framework for building concurrent {service-api} workers.
 It uses `Concurrent::FixedThreadPool` to manage multiple workers in a single process and provides a
@@ -14,6 +15,7 @@ minimal DSL for defining endpoints and middleware.
 * Middleware support using `use`.
 * Simple concurrency via `run` with a configurable number of instances.
 * JSON aware message wrapper that gracefully handles parse errors.
+* Railway Oriented Design, using {dry-monads} for success and failure handling.
 * {dry-configurable} settings container.
 
 == Requirements
