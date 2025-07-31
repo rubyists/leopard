@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/rubyists/leopard/compare/v0.1.2...v0.1.3) (2025-07-31)
+
+
+### Bug Fixes
+
+* Fixes the gem publisher, and adds missing .version.txt ([#11](https://github.com/rubyists/leopard/issues/11)) ([3dcbd3c](https://github.com/rubyists/leopard/commit/3dcbd3c1d687e04ce5fde85fef5c2d1c10a8a4cc))
+
 ## [0.1.2](https://github.com/rubyists/leopard/compare/v0.1.1...v0.1.2) (2025-07-31)
 
 
