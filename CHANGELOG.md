@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/rubyists/leopard/compare/v0.1.4...v0.1.5) (2025-07-31)
+
+
+### Bug Fixes
+
+* Run in blocking mode, not just non-blocking ([#15](https://github.com/rubyists/leopard/issues/15)) ([a659145](https://github.com/rubyists/leopard/commit/a659145d8a04efe3b3932b99ab4c11ef0ba2025e))
+
 ## [0.1.4](https://github.com/rubyists/leopard/compare/v0.1.3...v0.1.4) (2025-07-31)
 
 
