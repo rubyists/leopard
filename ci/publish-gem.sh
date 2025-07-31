@@ -67,7 +67,7 @@ fi
 
 if [ -z "$version" ]
 then
-    gem="$(ls ../../"$GEM_NAME"-*.gem | tail -1)"
+    gem="$(ls "$here"/../"$GEM_NAME"-*.gem | tail -1)"
 else
     gem="$(printf '%s/../%s-%s.gem' "$here" "$GEM_NAME" "$version")"
 fi
