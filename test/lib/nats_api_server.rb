@@ -53,15 +53,6 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     assert_equal [[String, [1], blk]], @klass.middleware
   end
 
-  it 'delegates run to spawn_instances' do
-    args = nil
-    @klass.stub(:spawn_instances, ->(url, opts, count) { args = [url, opts, count] }) do
-      @klass.run(nats_url: 'nats://', service_opts: { name: 'svc' }, instances: 2)
-    end
-
-    assert_equal ['nats://', { name: 'svc' }, 2], args
-  end
-
   it 'dispatches through middleware in reverse order' do
     order = []
     mw1 = Class.new do

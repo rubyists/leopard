@@ -70,12 +70,13 @@ module Rubyists
         # @param nats_url [String] The URL of the NATS server to connect to.
         # @param service_opts [Hash] Options for the NATS service.
         # @param instances [Integer] The number of instances to spawn. Defaults to 1.
+        # @param nosleep [Boolean] If true, does not sleep after starting the server. Defaults to false.
         #
         # @return [void]
-        def run(nats_url:, service_opts:, instances: 1)
+        def run(nats_url:, service_opts:, instances: 1, nosleep: false)
           logger.info 'Booting NATS API server...'
           spawn_instances(nats_url, service_opts, instances)
-          sleep
+          sleep unless nosleep
         end
 
         private
