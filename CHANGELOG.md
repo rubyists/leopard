@@ -1,0 +1,18 @@
+# Changelog
+
+## [0.1.1](https://github.com/rubyists/leopard/compare/v0.1.0...v0.1.1) (2025-07-31)
+
+
+### Features
+
+* Adds gemspec and gemfile ([#1](https://github.com/rubyists/leopard/issues/1)) ([972dc72](https://github.com/rubyists/leopard/commit/972dc72de804ca10db5cf869d0ea996a94ac9722))
+* Adds rakefile back ([#3](https://github.com/rubyists/leopard/issues/3)) ([271592c](https://github.com/rubyists/leopard/commit/271592c357e07d58de085297850533eaae60a285))
+* Adds settings to module ([9ff0942](https://github.com/rubyists/leopard/commit/9ff0942dddd86bf4f97bc82626cc7bb35e4115ac))
+* Basic functionality for serving apis ([#4](https://github.com/rubyists/leopard/issues/4)) ([9ff0942](https://github.com/rubyists/leopard/commit/9ff0942dddd86bf4f97bc82626cc7bb35e4115ac))
+* Initial readme ([4ea9f34](https://github.com/rubyists/leopard/commit/4ea9f341c9df6096b8df3595ff6a075eb9b5c4f6))
+
+
+### Bug Fixes
+
+* Corrects gemname in publish-gem.sh ([9ff0942](https://github.com/rubyists/leopard/commit/9ff0942dddd86bf4f97bc82626cc7bb35e4115ac))
+* Corrects the version ([#7](https://github.com/rubyists/leopard/issues/7)) ([a3de532](https://github.com/rubyists/leopard/commit/a3de5320a8c54e9ca6724b6e90812bb5b1b7d150))
