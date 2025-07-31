@@ -16,6 +16,7 @@ fi # }}}
 me=${BASH_SOURCE[0]}
 [ -L "$me" ] && me=$($readlink -f "$me")
 here=$(cd "$(dirname "$me")" && pwd)
+root=$(cd "$here/.." && pwd)
 just_me=$(basename "$me")
 
 : "${GEM_NAME:=leopard}"
@@ -58,6 +59,8 @@ then
     chmod 600 ~/.gem/credentials
 fi
 
+bundle exec gem build
+
 if [ -f "$here"/../.version.txt ]
 then
     version=$(<"$here"/../.version.txt)
@@ -67,9 +70,9 @@ fi
 
 if [ -z "$version" ]
 then
-    gem="$(ls "$here"/../"$GEM_NAME"-*.gem | tail -1)"
+    gem="$(ls "$root"/"$GEM_NAME"-*.gem | tail -1)"
 else
-    gem="$(printf '%s/../%s-%s.gem' "$here" "$GEM_NAME" "$version")"
+    gem="$(printf '%s-%s.gem' "$root" "$version")"
 fi
 
 if [ ! -f "$gem" ]
@@ -83,7 +86,6 @@ then
     printf "DEBUG: [%s] Building And Publishing %s to %s\n" "$just_me" "$gem" "$gem_host" >&2
 fi
 
-bundle exec gem build
 bundle exec gem push -k "$gem_key" --host "$gem_host" "$(basename "$gem")"
 
 # vim: set foldmethod=marker et ts=4 sts=4 sw=4 ft=bash :
