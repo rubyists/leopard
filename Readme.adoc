@@ -22,7 +22,7 @@ minimal DSL for defining endpoints and middleware.
 
 == Requirements
 
-* Ruby >= 3.3.0
+* Ruby >= 3.4.0
 * A running NATS server with the Service API enabled.
 
 == Installation
