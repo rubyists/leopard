@@ -1,0 +1,27 @@
+# Client port of 4222 on all interfaces
+port: 4222
+
+# HTTP monitoring port
+monitor_port: 8222
+
+accounts: {
+        $SYS: {
+                users: [
+                        { user: sys, password: sys }
+                ]
+        }
+        ME: {
+          jetstream: enabled
+          users: [
+             { user: me, password: youandme }
+          ]
+        }
+}
+no_auth_user: me
+
+authorization {
+	default_permissions = {
+			publish = ">"
+			subscribe = ">"
+	}
+}
