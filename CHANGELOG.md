@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/rubyists/leopard/compare/v0.1.1...v0.1.2) (2025-07-31)
+
+
+### Bug Fixes
+
+* Remove sequel cruft in ci config ([#9](https://github.com/rubyists/leopard/issues/9)) ([09a43e2](https://github.com/rubyists/leopard/commit/09a43e23c309167c56095dd608af9d79ff4f9b19))
+
 ## [0.1.1](https://github.com/rubyists/leopard/compare/v0.1.0...v0.1.1) (2025-07-31)
 
 
