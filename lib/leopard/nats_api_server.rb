@@ -202,10 +202,12 @@ module Rubyists
 
         # Processes the result of the handler execution.
         #
+        #
         # @param wrapper [MessageWrapper] The message wrapper containing the raw message.
         # @param result [Dry::Monads::Result] The result of the handler execution.
         #
         # @return [void]
+        # @raise [ResultError] If the result is not a Success or Failure monad.
         def process_result(wrapper, result)
           case result
           in Dry::Monads::Success
@@ -213,6 +215,9 @@ module Rubyists
           in Dry::Monads::Failure
             logger.error 'Error processing message: ', result.failure
             wrapper.respond_with_error(result.failure)
+          else
+            logger.error('Unexpected result: ', result:)
+            raise ResultError, "Unexpected Response from Handler, must respond with a Success or Failure monad: #{result}"
           end
         end
       end
