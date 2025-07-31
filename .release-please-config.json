@@ -11,7 +11,7 @@
       "extra-files": [
         {
           "type": "generic",
-          "path": "lib/sequel/pgt_outbox/version.rb"
+          "path": "lib/leopard/version.rb"
         },
         {
           "type": "generic",
@@ -21,7 +21,7 @@
       "exclude-paths": [
         ".release-please-manifest.json",
         ".version.txt",
-        "lib/sequel/pgt_outbox/version.rb",
+        "lib/leopard/version.rb",
         ".rubocop.yml",
         ".overcommit.yml",
         "coverage/coverage.json"
