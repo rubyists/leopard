@@ -18,7 +18,7 @@ me=${BASH_SOURCE[0]}
 here=$(cd "$(dirname "$me")" && pwd)
 just_me=$(basename "$me")
 
-: "${GEM_NAME:=sequel-pgt_outbox}"
+: "${GEM_NAME:=leopard}"
 : "${GIT_ORG:=rubyists}"
 
 GEM_HOST=$1

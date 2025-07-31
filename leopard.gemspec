@@ -2,7 +2,7 @@
 
 require_relative 'lib/leopard/version'
 
-Gem::Specification.new do |spec|
+Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
   spec.name = 'leopard'
   spec.version = Rubyists::Leopard::VERSION
   spec.authors = ['bougyman']
@@ -34,7 +34,11 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   # Uncomment to register a new dependency of your gem
+  spec.add_dependency 'concurrent-ruby', '~> 1.1'
+  spec.add_dependency 'dry-configurable', '~> 1.3'
+  spec.add_dependency 'dry-monads', '~> 1.9'
   spec.add_dependency 'nats-pure', '~> 2.5'
+  spec.add_dependency 'semantic_logger', '~> 4'
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
