@@ -65,13 +65,25 @@ else
     version=$(git describe --tags --abbrev=0 | sed -e 's/^v//')
 fi
 
-gem="$(printf '%s-%s.gem' "$GEM_NAME" "$version")"
+if [ -z "$version" ]
+then
+    gem="$(ls ../../"$GEM_NAME"-*.gem | tail -1)"
+else
+    gem="$(printf '%s/../%s-%s.gem' "$here" "$GEM_NAME" "$version")"
+fi
+
+if [ ! -f "$gem" ]
+then
+    printf 'No gem file found: %s\n' "$gem" >&2
+    exit 1
+fi
+
 if [[ "${TRACE:-false}" == true || "${ACTIONS_STEP_DEBUG:-false}" == true ]]
 then
     printf "DEBUG: [%s] Building And Publishing %s to %s\n" "$just_me" "$gem" "$gem_host" >&2
 fi
 
 bundle exec gem build
-bundle exec gem push -k "$gem_key" --host "$gem_host" "$gem"
+bundle exec gem push -k "$gem_key" --host "$gem_host" "$(basename "$gem")"
 
 # vim: set foldmethod=marker et ts=4 sts=4 sw=4 ft=bash :
