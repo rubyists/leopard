@@ -76,7 +76,8 @@ module Rubyists
         def run(nats_url:, service_opts:, instances: 1, blocking: true)
           logger.info 'Booting NATS API server...'
           # Return the thread pool if non-blocking
-          return spawn_instances(nats_url, service_opts, instances) unless blocking
+          pool = spawn_instances(nats_url, service_opts, instances) unless blocking
+          return pool unless blocking
 
           # Otherwise, just sleep the main thread forever
           sleep
