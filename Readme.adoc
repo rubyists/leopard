@@ -11,12 +11,14 @@ minimal DSL for defining endpoints and middleware.
 
 == Features
 
-* Declarative endpoint definitions with `endpoint`.
-* Middleware support using `use`.
-* Simple concurrency via `run` with a configurable number of instances.
+* Declarative endpoint definitions with `#endpoint`.
+* Grouping of endpoints with `#group`
+* Simple concurrency via `#run` with a configurable number of instances.
 * JSON aware message wrapper that gracefully handles parse errors.
+* Middleware support using `#use`.
 * Railway Oriented Design, using {dry-monads} for success and failure handling.
 * {dry-configurable} settings container.
+* `#logger` defaults to SemanticLogger (adjustable as the `#logger=` setting)
 
 == Requirements
 
