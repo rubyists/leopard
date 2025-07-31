@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/rubyists/leopard/compare/v0.1.3...v0.1.4) (2025-07-31)
+
+
+### Bug Fixes
+
+* Have to build the gem before we can find it, doh ([#13](https://github.com/rubyists/leopard/issues/13)) ([62053e9](https://github.com/rubyists/leopard/commit/62053e9d2332d37d4d5697035a35adc71833eccd))
+
 ## [0.1.3](https://github.com/rubyists/leopard/compare/v0.1.2...v0.1.3) (2025-07-31)
 
 
