@@ -72,7 +72,7 @@ if [ -z "$version" ]
 then
     gem="$(ls "$root"/"$GEM_NAME"-*.gem | tail -1)"
 else
-    gem="$(printf '%s-%s.gem' "$root" "$version")"
+    gem="$(printf '%s/%s-%s.gem' "$root" "$GEM_NAME" "$version")"
 fi
 
 if [ ! -f "$gem" ]
