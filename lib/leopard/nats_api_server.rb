@@ -14,6 +14,7 @@ module Rubyists
 
       def self.included(base)
         base.extend(ClassMethods)
+        base.include(InstanceMethods)
         base.extend(Dry::Monads[:result])
         base.include(SemanticLogger::Loggable)
       end
@@ -98,6 +99,14 @@ module Rubyists
           pool
         end
 
+        def setup_worker(url, opts, eps, gps)
+          # Create an instance of the NATS client to act as a worker thread
+          worker = new
+          worker.setup_worker(url, opts, eps, gps)
+        end
+      end
+
+      module InstanceMethods
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
         # and keeps the worker thread alive.
@@ -109,55 +118,54 @@ module Rubyists
         #
         # @return [void]
         def setup_worker(url, opts, eps, gps)
-          client  = NATS.connect url
-          service = client.services.add(**opts)
-          group_map = add_groups(service, gps)
-          add_endpoints service, eps, group_map
+          @client  = NATS.connect url
+          @service = @client.services.add(**opts)
+          group_map = add_groups(gps)
+          add_endpoints eps, group_map
           # Keep the worker thread alive
           sleep
         end
 
+        private
+
         # Adds groups to the NATS service.
         #
-        # @param service [NATS::Service] The NATS service to add groups to.
         # @param gps [Hash] The groups to add, where keys are group names and values are group definitions.
         #
         # @return [Hash] A map of group names to their created group objects.
-        def add_groups(service, gps)
+        def add_groups(gps)
           created = {}
-          gps.each_key { |name| build_group(service, gps, created, name) }
+          gps.each_key { |name| build_group(gps, created, name) }
           created
         end
 
         # Builds a group in the NATS service.
         #
-        # @param service [NATS::Service] The NATS service to add the group to.
         # @param defs [Hash] The group definitions, where keys are group names and values are group definitions.
         # @param cache [Hash] A cache to store already created groups.
         # @param name [String] The name of the group to build.
         #
         # @return [NATS::Group] The created group object.
-        def build_group(service, defs, cache, name)
+        def build_group(defs, cache, name)
           return cache[name] if cache.key?(name)
 
           gdef = defs[name]
           raise ArgumentError, "Group #{name} not defined" unless gdef
 
-          parent = gdef[:parent] ? build_group(service, defs, cache, gdef[:parent]) : service
+          parent = gdef[:parent] ? build_group(defs, cache, gdef[:parent]) : @service
           cache[name] = parent.groups.add(gdef[:name], queue: gdef[:queue])
         end
 
         # Adds endpoints to the NATS service.
         #
-        # @param service [NATS::Service] The NATS service to add endpoints to.
         # @param endpoints [Array<Hash>] The list of endpoints to add.
         # @param group_map [Hash] A map of group names to their created group objects.
         #
         # @return [void]
-        def add_endpoints(service, endpoints, group_map)
+        def add_endpoints(endpoints, group_map)
           endpoints.each do |ep|
-            grp = ep[:grp]
-            parent = grp ? group_map[grp] : service
+            grp = ep.group
+            parent = grp ? group_map[grp] : @service
             raise ArgumentError, "Group #{grp} not defined" if grp && parent.nil?
 
             build_endpoint(parent, ep)
@@ -186,7 +194,7 @@ module Rubyists
         # @return [void]
         def dispatch_with_middleware(wrapper, handler)
           app = ->(w) { handle_message(w.raw, handler) }
-          middleware.reverse_each do |(klass, args, blk)|
+          self.class.middleware.reverse_each do |(klass, args, blk)|
             app = klass.new(app, *args, &blk)
           end
           app.call(wrapper)
@@ -208,7 +216,6 @@ module Rubyists
         end
 
         # Processes the result of the handler execution.
-        #
         #
         # @param wrapper [MessageWrapper] The message wrapper containing the raw message.
         # @param result [Dry::Monads::Result] The result of the handler execution.
