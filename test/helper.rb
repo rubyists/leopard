@@ -15,6 +15,6 @@ end
 require 'minitest/autorun'
 require_relative '../lib/leopard'
 
-# Suppress tests when running tests
+# Suppress logs when running tests
 require 'semantic_logger'
 SemanticLogger.default_level = :fatal
