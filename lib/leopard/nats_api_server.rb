@@ -18,6 +18,8 @@ module Rubyists
         base.include(SemanticLogger::Loggable)
       end
 
+      Endpoint = Struct.new(:name, :subject, :queue, :group, :handler)
+
       module ClassMethods
         def endpoints = @endpoints ||= []
         def groups = @groups ||= {}
@@ -33,13 +35,7 @@ module Rubyists
         #
         # @return [void]
         def endpoint(name, subject: nil, queue: nil, group: nil, &handler)
-          endpoints << {
-            name:,
-            subject: subject || name,
-            queue:,
-            group:,
-            handler:,
-          }
+          endpoints << Endpoint.new(name:, subject: subject || name, queue:, group:, handler:)
         end
 
         # Define a group for organizing endpoints.
@@ -160,15 +156,25 @@ module Rubyists
         # @return [void]
         def add_endpoints(service, endpoints, group_map)
           endpoints.each do |ep|
-            parent = ep[:group] ? group_map[ep[:group]] : service
-            raise ArgumentError, "Group #{ep[:group]} not defined" if ep[:group] && parent.nil?
+            grp = ep[:grp]
+            parent = grp ? group_map[grp] : service
+            raise ArgumentError, "Group #{grp} not defined" if grp && parent.nil?
 
-            parent.endpoints.add(
-              ep[:name], subject: ep[:subject], queue: ep[:queue]
-            ) do |raw_msg|
-              wrapper = MessageWrapper.new(raw_msg)
-              dispatch_with_middleware(wrapper, ep[:handler])
-            end
+            build_endpoint(parent, ep)
+          end
+        end
+
+        # Builds an endpoint in the NATS service.
+        #
+        # @param parent [NATS::Group] The parent group or service to add the endpoint to.
+        # @param ept    [Endpoint]    The endpoint definition containing name, subject, queue, and handler.
+        #               NOTE: Named ept because `endpoint` is a DSL method we expose, to avoid confusion.
+        #
+        # @return [void]
+        def build_endpoint(parent, ept)
+          parent.endpoints.add(ept.name, subject: ept.subject, queue: ept.queue) do |raw_msg|
+            wrapper = MessageWrapper.new(raw_msg)
+            dispatch_with_middleware(wrapper, ept.handler)
           end
         end
 
