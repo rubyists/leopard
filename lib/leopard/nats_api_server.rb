@@ -107,8 +107,8 @@ module Rubyists
           worker.setup_worker(url, opts, eps, gps)
         end
 
-        def trap_signals(workers, pool)
-          shutdown = lambda do
+        def shutdown(workers, pool)
+          lambda do
             logger.warn 'Draining worker subscriptions...'
             workers.each(&:stop)
             logger.warn 'All workers stopped, shutting down pool...'
@@ -118,10 +118,13 @@ module Rubyists
             logger.warn 'Bye bye!'
             wake_main_thread
           end
+        end
+
+        def trap_signals(workers, pool)
           %w[INT TERM QUIT].each do |sig|
             trap(sig) do
               logger.warn "Received #{sig} signal, shutting down..."
-              Thread.new { shutdown.call }
+              Thread.new { shutdown(workers, pool).call }
             end
           end
         end
