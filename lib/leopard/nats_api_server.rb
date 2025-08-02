@@ -145,12 +145,15 @@ module Rubyists
         #
         # @return [void]
         def trap_signals(workers, pool)
+          return if @trapped
+
           %w[INT TERM QUIT].each do |sig|
             trap(sig) do
               logger.warn "Received #{sig} signal, shutting down..."
               Thread.new { shutdown(workers, pool).call }
             end
           end
+          @trapped = true
         end
 
         # Wakes up the main thread to allow it to continue execution after the server is stopped.
