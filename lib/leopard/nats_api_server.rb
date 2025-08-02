@@ -16,7 +16,8 @@ module Rubyists
         base.extend(ClassMethods)
         base.include(InstanceMethods)
         base.extend(Dry::Monads[:result])
-        base.include(SemanticLogger::Loggable)
+        base.extend(Dry::Configurable)
+        base.setting :logger, default: Rubyists::Leopard.logger, reader: true
       end
 
       Endpoint = Struct.new(:name, :subject, :queue, :group, :handler)
