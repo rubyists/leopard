@@ -2,6 +2,7 @@
 
 require 'nats/client'
 require 'dry/monads'
+require 'dry/configurable'
 require 'concurrent'
 require_relative '../leopard'
 require_relative 'message_wrapper'
@@ -73,11 +74,11 @@ module Rubyists
         # @return [void]
         def run(nats_url:, service_opts:, instances: 1, blocking: true)
           logger.info 'Booting NATS API server...'
-          # Return the thread pool if non-blocking
-          pool = spawn_instances(nats_url, service_opts, instances)
+          workers = Concurrent::Array.new
+          pool = spawn_instances(nats_url, service_opts, instances, workers)
+          trap_signals(workers, pool)
           return pool unless blocking
 
-          # Otherwise, just sleep the main thread forever
           sleep
         end
 
@@ -90,24 +91,51 @@ module Rubyists
         # @param count [Integer] The number of instances to spawn.
         #
         # @return [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
-        def spawn_instances(url, opts, count)
+        def spawn_instances(url, opts, count, workers)
           pool = Concurrent::FixedThreadPool.new(count)
           count.times do
             eps = endpoints.dup
             gps = groups.dup
-            pool.post { setup_worker(url, opts, eps, gps) }
+            pool.post { build_worker(url, opts, eps, gps, workers) }
           end
           pool
         end
 
-        def setup_worker(url, opts, eps, gps)
-          # Create an instance of the NATS client to act as a worker thread
+        def build_worker(url, opts, eps, gps, workers)
           worker = new
+          workers << worker
           worker.setup_worker(url, opts, eps, gps)
+        end
+
+        def trap_signals(workers, pool)
+          shutdown = lambda do
+            logger.warn 'Draining worker subscriptions...'
+            workers.each(&:stop)
+            logger.warn 'All workers stopped, shutting down pool...'
+            pool.shutdown
+            logger.warn 'Pool is shut down, waiting for termination!'
+            pool.wait_for_termination
+            logger.warn 'Bye bye!'
+            wake_main_thread
+          end
+          %w[INT TERM QUIT].each do |sig|
+            trap(sig) do
+              logger.warn "Received #{sig} signal, shutting down..."
+              Thread.new { shutdown.call }
+            end
+          end
+        end
+
+        def wake_main_thread
+          Thread.main.wakeup
+        rescue ThreadError
+          nil
         end
       end
 
       module InstanceMethods
+        def logger = self.class.config.logger
+
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
         # and keeps the worker thread alive.
@@ -119,12 +147,20 @@ module Rubyists
         #
         # @return [void]
         def setup_worker(url, opts, eps, gps)
+          @thread  = Thread.current
           @client  = NATS.connect url
           @service = @client.services.add(**opts)
           group_map = add_groups(gps)
           add_endpoints eps, group_map
-          # Keep the worker thread alive
           sleep
+        end
+
+        def stop
+          @service&.stop
+          @client&.close
+          @thread&.wakeup
+        rescue ThreadError
+          nil
         end
 
         private
