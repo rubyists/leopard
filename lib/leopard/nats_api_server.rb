@@ -170,9 +170,7 @@ module Rubyists
 
       module InstanceMethods
         # Returns the logger configured for the NATS API server.
-        def logger
-          self.class.logger
-        end
+        def logger = self.class.logger
 
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
