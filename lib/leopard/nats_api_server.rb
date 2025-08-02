@@ -76,6 +76,7 @@ module Rubyists
           logger.info 'Booting NATS API server...'
           workers = Concurrent::Array.new
           pool = spawn_instances(nats_url, service_opts, instances, workers)
+          logger.info 'Setting up signal trap...'
           trap_signals(workers, pool)
           return pool unless blocking
 
@@ -102,7 +103,8 @@ module Rubyists
         end
 
         def build_worker(url, opts, eps, gps, workers)
-          worker = new
+          instance_args = opts.delete(:instance_args)
+          worker = instance_args ? new(*instance_args) : new
           workers << worker
           worker.setup_worker(url, opts, eps, gps)
         end
@@ -137,8 +139,6 @@ module Rubyists
       end
 
       module InstanceMethods
-        def logger = self.class.config.logger
-
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
         # and keeps the worker thread alive.
