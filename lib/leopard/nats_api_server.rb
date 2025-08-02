@@ -94,6 +94,7 @@ module Rubyists
         # @return [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
         def spawn_instances(url, opts, count, workers)
           pool = Concurrent::FixedThreadPool.new(count)
+          logger.info "Building #{count} workers with options: #{opts.inspect}"
           count.times do
             eps = endpoints.dup
             gps = groups.dup
