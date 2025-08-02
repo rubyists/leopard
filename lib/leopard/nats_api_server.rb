@@ -94,7 +94,8 @@ module Rubyists
         # @return [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
         def spawn_instances(url, opts, count, workers)
           pool = Concurrent::FixedThreadPool.new(count)
-          logger.info "Building #{count} workers with options: #{opts.inspect}"
+          @instance_args = opts.delete(:instance_args) || nil
+          logger.info "Building #{count} workers with options: #{opts.inspect}, instance_args: #{@instance_args}"
           count.times do
             eps = endpoints.dup
             gps = groups.dup
@@ -103,13 +104,27 @@ module Rubyists
           pool
         end
 
+        # Builds a worker instance and sets it up with the NATS server.
+        #
+        # @param url [String] The URL of the NATS server.
+        # @param opts [Hash] Options for the NATS service.
+        # @param eps [Array<Hash>] The list of endpoints to add.
+        # @param gps [Hash] The groups to add.
+        # @param workers [Array] The array to store worker instances.
+        #
+        # @return [void]
         def build_worker(url, opts, eps, gps, workers)
-          instance_args = opts.delete(:instance_args)
-          worker = instance_args ? new(*instance_args) : new
+          worker = @instance_args ? new(*@instance_args) : new
           workers << worker
           worker.setup_worker(url, opts, eps, gps)
         end
 
+        # Shuts down the NATS API server gracefully.
+        #
+        # @param workers [Array] The array of worker instances to stop.
+        # @param pool [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
+        #
+        # @return [Proc] A lambda that performs the shutdown operations.
         def shutdown(workers, pool)
           lambda do
             logger.warn 'Draining worker subscriptions...'
@@ -123,6 +138,12 @@ module Rubyists
           end
         end
 
+        # Sets up signal traps for graceful shutdown of the NATS API server.
+        #
+        # @param workers [Array] The array of worker instances to stop on signal.
+        # @param pool [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
+        #
+        # @return [void]
         def trap_signals(workers, pool)
           %w[INT TERM QUIT].each do |sig|
             trap(sig) do
@@ -132,6 +153,11 @@ module Rubyists
           end
         end
 
+        # Wakes up the main thread to allow it to continue execution after the server is stopped.
+        # This is useful when the server is running in a blocking mode.
+        # If the main thread is not blocked, this method does nothing.
+        #
+        # @return [void]
         def wake_main_thread
           Thread.main.wakeup
         rescue ThreadError
@@ -140,6 +166,11 @@ module Rubyists
       end
 
       module InstanceMethods
+        # Returns the logger configured for the NATS API server.
+        def logger
+          self.class.logger
+        end
+
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
         # and keeps the worker thread alive.
@@ -159,6 +190,7 @@ module Rubyists
           sleep
         end
 
+        # Stops the NATS API server worker.
         def stop
           @service&.stop
           @client&.close
