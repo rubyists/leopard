@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/rubyists/leopard/compare/v0.1.5...v0.1.6) (2025-08-03)
+
+
+### Features
+
+* Adds graceful shutdown when INT/TERM/QUIT signal is received ([#18](https://github.com/rubyists/leopard/issues/18)) ([ce03fb0](https://github.com/rubyists/leopard/commit/ce03fb00afcbbadadc413766b62df9451f7b73b8))
+
 ## [0.1.5](https://github.com/rubyists/leopard/compare/v0.1.4...v0.1.5) (2025-07-31)
 
 
