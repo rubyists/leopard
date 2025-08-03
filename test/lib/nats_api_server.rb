@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require_relative '../helper'
 require Rubyists::Leopard.libroot / 'leopard/nats_api_server'
 
 describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLength
@@ -8,6 +8,9 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     @klass = Class.new do
       include Rubyists::Leopard::NatsApiServer
     end
+
+    # Create an instance of the class to test instance methods
+    @instance = @klass.new
 
     mod = Rubyists::Leopard::NatsApiServer
     cm  = mod::ClassMethods
@@ -19,16 +22,28 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     blk = proc {}
     @klass.endpoint(:foo, &blk)
 
-    assert_equal [{ name: :foo, subject: :foo, queue: nil, group: nil, handler: blk }],
-      @klass.endpoints
+    assert_equal 1, @klass.endpoints.length
+    endpoint = @klass.endpoints.first
+
+    assert_equal :foo, endpoint.name
+    assert_equal :foo, endpoint.subject
+    assert_nil endpoint.queue
+    assert_nil endpoint.group
+    assert_equal blk, endpoint.handler
   end
 
   it 'registers an endpoint with options' do
     blk = proc {}
     @klass.endpoint(:foo, subject: 'bar', queue: 'q', &blk)
 
-    assert_equal [{ name: :foo, subject: 'bar', queue: 'q', group: nil, handler: blk }],
-      @klass.endpoints
+    assert_equal 1, @klass.endpoints.length
+    endpoint = @klass.endpoints.first
+
+    assert_equal :foo, endpoint.name
+    assert_equal 'bar', endpoint.subject
+    assert_equal 'q', endpoint.queue
+    assert_nil endpoint.group
+    assert_equal blk, endpoint.handler
   end
 
   it 'registers a group' do
@@ -42,8 +57,14 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     @klass.group :math
     @klass.endpoint(:add, group: :math, &blk)
 
-    assert_equal [{ name: :add, subject: :add, queue: nil, group: :math, handler: blk }],
-      @klass.endpoints
+    assert_equal 1, @klass.endpoints.length
+    endpoint = @klass.endpoints.first
+
+    assert_equal :add, endpoint.name
+    assert_equal :add, endpoint.subject
+    assert_nil endpoint.queue
+    assert_equal :math, endpoint.group
+    assert_equal blk, endpoint.handler
   end
 
   it 'adds middleware' do
@@ -53,7 +74,7 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     assert_equal [[String, [1], blk]], @klass.middleware
   end
 
-  it 'dispatches through middleware in reverse order' do
+  it 'dispatches through middleware in reverse order' do # rubocop:disable Metrics/BlockLength
     order = []
     mw1 = Class.new do
       def initialize(app) = (@app = app)
@@ -71,12 +92,22 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
         @app.call(wrapper)
       end
     end
-    handler = ->(w) { w.log << :handler }
-    wrapper = Struct.new(:raw, :log).new(:raw, order)
     @klass.use mw1
     @klass.use mw2
-    @klass.stub(:handle_message, ->(_raw, h) { h.call(wrapper) }) do
-      @klass.send(:dispatch_with_middleware, wrapper, handler)
+
+    @instance = @klass.new
+
+    raw = Struct.new(:data, :header).new('raw_message', {})
+    wrapper = Struct.new(:raw, :log).new(raw, order)
+
+    handler = proc { |wrapper|
+      wrapper.log << :handler
+      Dry::Monads::Success(:ok)
+    }
+    @instance.stub(:process_result, ->(_wrapper, _result) {}) do
+      Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
+        @instance.send(:dispatch_with_middleware, wrapper, handler)
+      end
     end
 
     assert_equal %i[mw1 mw2 handler], order
@@ -92,9 +123,13 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
       result
     }
     processed = nil
-    @klass.stub(:process_result, ->(w, r) { processed = [w, r] }) do
+
+    # Create an instance of the class to test instance methods after middleware is added
+    @instance = @klass.new
+
+    @instance.stub(:process_result, ->(w, r) { processed = [w, r] }) do
       Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
-        @klass.send(:handle_message, raw_msg, handler)
+        @instance.send(:handle_message, raw_msg, handler)
       end
     end
 
@@ -107,7 +142,7 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     wrapper = Minitest::Mock.new
     wrapper.expect(:respond_with_error, nil, ['boom'])
     Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
-      @klass.send(:handle_message, raw_msg, proc { raise 'boom' })
+      @instance.send(:handle_message, raw_msg, proc { raise 'boom' })
     end
     wrapper.verify
   end
@@ -116,7 +151,7 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     wrapper = Minitest::Mock.new
     wrapper.expect(:respond, nil, ['ok'])
     result = Rubyists::Leopard::NatsApiServer::Success.new('ok')
-    @klass.send(:process_result, wrapper, result)
+    @instance.send(:process_result, wrapper, result)
     wrapper.verify
   end
 
@@ -124,7 +159,7 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     wrapper = Minitest::Mock.new
     wrapper.expect(:respond_with_error, nil, ['fail'])
     result = Rubyists::Leopard::NatsApiServer::Failure.new('fail')
-    @klass.send(:process_result, wrapper, result)
+    @instance.send(:process_result, wrapper, result)
     wrapper.verify
   end
 end
