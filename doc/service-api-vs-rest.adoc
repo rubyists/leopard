@@ -14,6 +14,7 @@ and illustrates how Leopard can streamline microservice (and nanoservice) archit
 Microservices communicate most often via HTTP/REST today, but REST comes with overhead: service registries,
 load-balancers, schema/version endpoints, and brittle synchronous request patterns.
 Leopard leverages NATS’s Service-API layer to deliver:
+
 * **Automatic discovery** via `$SRV.PING/INFO/​STATS` subjects
 * **Dynamic load-balanced routing** with queue groups
 * **Built-in telemetry** (per-endpoint request counts, latencies, errors)
