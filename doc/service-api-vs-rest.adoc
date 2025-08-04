@@ -16,7 +16,7 @@ Microservices communicate most often via HTTP/REST today, but REST comes with ov
 == 2. Architecture Overview
 Leopard embeds a “mini web-framework” in Ruby, registering each endpoint on a NATS subject and grouping instances for load-sharing:
 
-[mermaid,flowchart]
+[source,mermaid]
 ----
 flowchart LR
   subgraph ServiceInstance
