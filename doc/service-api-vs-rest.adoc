@@ -44,6 +44,7 @@ graph LR
 
 === 3.1 Automatic Discovery & Monitoring
 Leopard services auto-advertise on well-known NATS subjects. Clients can query:
+
 * `$SRV.PING.<name>` – discover live instances & measure RTT
 * `$SRV.INFO.<name>` – retrieve endpoint schemas & metadata
 * `$SRV.STATS.<name>` – fetch per-endpoint metrics
@@ -52,18 +53,21 @@ No external service-registry (Consul, etcd) or custom HTTP health paths required
 
 === 3.2 Scaling-Per-Endpoint-Group
 Each endpoint—registered with an optional queue group—enjoys native NATS queue-group load balancing. You can:
+
 * Scale thread-pooled workers independently per service
 * Horizontally add new service instances without redeploying clients
 * Isolate hot-paths (e.g. “reports.generate”) onto dedicated worker farms
 
 === 3.3 Observability & Telemetry
 Leopard exposes stats out-of-the-box:
+
 * Request counts, error counts, processing time
 * Custom `on_stats` hooks for business metrics
 * Integration with Prometheus or any NATS-capable dashboard
 
 === 3.4 Asynchronous, Resilient Communication
 Unlike blocking HTTP calls, Leopard’s NATS requests can:
+
 * Employ timeouts, retries, and dead-letter queues
 * Fit into event-driven pipelines, decoupling producers and consumers
 * Maintain throughput under partial outages
