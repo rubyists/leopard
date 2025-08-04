@@ -20,7 +20,7 @@ Leopard embeds a “mini web-framework” in Ruby, registering each endpoint on 
 ----
 graph LR
   subgraph ServiceInstance
-    A[NatsApiServer.start] --> B[Registers endpoints]
+    A[NatsApiServer.run] --> B[Registers endpoints]
   end
   subgraph NATS_Cluster
     B --> C["$SRV.INFO.calc"]
