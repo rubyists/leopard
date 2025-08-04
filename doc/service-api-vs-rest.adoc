@@ -18,8 +18,7 @@ Leopard leverages NATS’s Service-API layer to deliver:
 * **Automatic discovery** via `$SRV.PING/INFO/​STATS` subjects
 * **Dynamic load-balanced routing** with queue groups
 * **Built-in telemetry** (per-endpoint request counts, latencies, errors)
-* **Scalable workers** (Concurrent::FixedThreadPool currently)
-* **Asynchronous decoupling** for resilient flows
+* **Scalable workers** (Concurrent::FixedThreadPool with Leopard, currently)
 * **Versioned endpoints**  multiple versions can be registered concurrently, no need for /v1, /v2, etc.
 
 == 2. Architecture Overview
