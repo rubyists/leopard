@@ -126,7 +126,7 @@ Unlike blocking HTTP calls, Leopard’s NATS requests can:
 . **Learning Curve**
   Teams must understand NATS subjects, queue groups, and ServiceApi conventions. (Easier with helpers like Leopard’s `NatsApiServer`.)
 . **Language Support**
-  While Leopard is Ruby-centric, NATS ServiceApi is cross-language—other teams must adopt compatible clients. (And handle concurrency and error handling in their own way.)
+  While Leopard is Ruby-centric, NATS ServiceApi is cross-language. All teams must adopt compatible clients. (And handle concurrency and error handling in their own way.)
 . **Subject Naming**
   Adopting a consistent naming convention for subjects is crucial. This can be a challenge in large teams.
   NATS can support a massive number of subjects. But to avoid confusion, subjects should have
