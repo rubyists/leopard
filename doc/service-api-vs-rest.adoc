@@ -131,11 +131,12 @@ Unlike blocking HTTP calls, Leopard’s NATS requests can:
   Adopting a consistent naming convention for subjects is crucial. This can be a challenge in large teams.
   NATS can support a massive number of subjects. But to avoid confusion, subjects should have
   clear, descriptive names that reflect the service and endpoint purpose.
-  There could (should?) be a central authoritative
-  document that defines the subject structure and naming conventions.
-  There should also be a "registry" of subjects,
-  that can be queried by developers to discover available subjects.
-  This can avoid confusion and ensure that all developers are on the same page and not conflicting with one another.
+  Even though NATS service API exposes auto-discovery, there could (should?) be a central authoritative
+  document that defines the subject structure and naming conventions. This can avoid the TOCTOE issue.
+  (You check for a subject, it's not used, but then someone implements it in the meantime.)
+  That leads to: there should be a "registry" of subjects, that can be queried by developers
+  to discover available subjects.  This can avoid confusion and ensure that all developers are on the same
+  page and not conflicting with one another.
 
 == 6. What, then?
 Leopard’s NATS ServiceApi framework offers a powerful alternative to REST:
