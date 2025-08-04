@@ -66,8 +66,8 @@ Unlike blocking HTTP calls, Leopard’s NATS requests can:
 | Feature                   | REST (HTTP)                                                | NATS Service-API
 
 | Discovery
-| Requires external service registry or API gateway
-| Built-in via `$SRV.PING`, `$SRV.INFO`, `$SRV.STATS`—works uniformly across all languages
+| Requires external service registry or API gateway, A.K.A. "it's always DNS"
+| Built-in via `$SRV.PING`, `$SRV.INFO`, `$SRV.STATS` Works uniformly across all languages
 
 | Load Balancing
 | HTTP load balancer or DNS round-robin
@@ -79,7 +79,7 @@ Unlike blocking HTTP calls, Leopard’s NATS requests can:
 
 | Latency & Overhead
 | Higher (HTTP/TCP handshake, headers, JSON)
-| Low-latency binary protocol with optional JSON payloads
+| Low-latency binary protocol with optional JSON payloads (other formats supported with plugins)
 
 | Communication Model
 | Synchronous, blocking request/response
@@ -99,16 +99,32 @@ Unlike blocking HTTP calls, Leopard’s NATS requests can:
 
 | Scalability
 | Scale replicas behind LB
-| Scale Ractor/thread pools + horizontal instances independently
+| Scale thread pools vertically + horizontal instances independently, by endpoint groups (or even a single endpoint)
 |===
 
 == 5. Trade-Offs & Considerations
 . **Dependency on NATS**
-  Leopard requires a healthy NATS cluster; network partition or broker outage impacts all services.
+  Leopard requires a healthy NATS cluster; network partition or broker outage impacts all services. (This is not unlike Redis or Postgres dependencies)
 . **Learning Curve**
-  Teams must understand NATS subjects, queue groups, and Service-API conventions.
+  Teams must understand NATS subjects, queue groups, and Service-API conventions. (Easier with helpers like Leopard’s `NatsApiServer`.)
 . **Language Support**
-  While Leopard is Ruby-centric, NATS Service-API is cross-language—other teams must adopt compatible clients.
+  While Leopard is Ruby-centric, NATS Service-API is cross-language—other teams must adopt compatible clients. (And handle concurrency and error handling in their own way.)
+. **Subject Naming**
+  Adopting a consistent naming convention for subjects is crucial. This can be a challenge in large teams.
+  NATS can support a massive number of subjects. But to avoid confusion, subjects should have
+  clear, descriptive names that reflect the service and endpoint purpose.
+  There could (should?) be a central authoritative
+  document that defines the subject structure and naming conventions.
+  There should also be a "registry" of subjects,
+  that can be queried by developers to discover available subjects.
+  This can avoid confusion and ensure that all developers are on the same page and not conflicting with one another.
 
-== 6. Conclusion
-Leopard’s NATS Service-API framework offers a powerful alternative to REST: zero-config discovery, per-endpoint scaling, rich observability, and asynchronous resilience. For high-throughput, low-latency microservice ecosystems, Leopard can simplify infrastructure, reduce boilerplate, and improve operational visibility—while retaining the expressiveness and composability of idiomatic Ruby.
+== 6. What, then?
+Leopard’s NATS Service-API framework offers a powerful alternative to REST:
+zero-config discovery, per-endpoint scaling, rich observability, and asynchronous resilience.
+
+For high-throughput, low-latency microservice (nano-service?) ecosystems, Leopard can simplify infrastructure,
+reduce boilerplate, and improve operational visibility.
+
+Leopard's aim is to retain the expressiveness and composability of idiomatic Ruby, while leveraging
+NATS's ServiceApi performance and flexibility.
