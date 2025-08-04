@@ -27,7 +27,7 @@ graph LR
     B --> D["calc.add queue group"]
   end
   E[Client] -->|request calc.add| D
-  D --> F[Worker Ractor pool]
+  D --> F[Worker Thread pool]
   F --> G[Handler & Dry Monads]
   G -->|respond or error| E
 ----
