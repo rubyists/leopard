@@ -18,15 +18,15 @@ Leopard embeds a “mini web-framework” in Ruby, registering each endpoint on 
 
 [source,mermaid]
 ----
-flowchart LR
+graph LR
   subgraph ServiceInstance
-    A[NatsApiServer.start] --> B(Registers endpoints)
+    A[NatsApiServer.start] --> B[Registers endpoints]
   end
   subgraph NATS_Cluster
-    B --> C[$SRV.INFO.calc]
-    B --> D[calc.add queue group]
+    B --> C["$SRV.INFO.calc"]
+    B --> D["calc.add queue group"]
   end
-  E[Client] -->|request(calc.add)| D
+  E[Client] -->|request("calc.add")| D
   D --> F[Worker Ractor pool]
   F --> G[Handler & Dry::Monads]
   G -->|respond()/respond_with_error()| E
