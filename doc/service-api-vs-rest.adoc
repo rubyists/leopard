@@ -1,0 +1,144 @@
+= NATS ServiceApi (via Leopard) vs REST
+:revdate: 2025-08-03
+:doctype: whitepaper
+
+== Abstract
+Leopard’s NATS ServiceApi wrapper delivers full-featured service-to-service communication, comparable with REST/GRPC.
+With NATS, you get complete with discovery, health checks, per-endpoint scaling, and observability.
+This abstraction preserves the simplicity of REST request with the resilience of asynchronous messaging
+under the hood.
+
+This paper contrasts the NATS ServiceApi model with traditional REST, outlines its key benefits and trade-offs,
+and illustrates how Leopard can specifically streamline microservice (and nanoservice) architectures.
+
+== 1. Introduction
+Microservices communicate most often via HTTP/REST today, but REST comes with overhead: service registries,
+load-balancers, schema/version endpoints, and brittle synchronous request patterns.
+Leopard leverages NATS’s ServiceApi layer to deliver:
+
+* **Automatic discovery** via `$SRV.PING/INFO/​STATS` subjects
+* **Dynamic load-balanced routing** with queue groups
+* **Built-in telemetry** (per-endpoint request counts, latencies, errors)
+* **Scalable workers** (Concurrent::FixedThreadPool with Leopard, currently)
+* **Versioned endpoints**  multiple versions can be registered concurrently, no need for /v1, /v2, etc.
+
+== 2. Architecture Overview
+Leopard embeds a “mini web-framework” in Ruby, registering each endpoint on a NATS subject and grouping instances for load-sharing:
+
+[source,mermaid]
+----
+graph LR
+  subgraph ServiceInstance
+    A[NatsApiServer.run] --> B[Registers endpoints]
+  end
+  subgraph NATS_Cluster
+    B --> C["$SRV.INFO.calc"]
+    B --> D["calc.add queue group"]
+  end
+  E[Client] -->|request calc.add| D
+  D --> F[Worker Thread pool]
+  F --> G[Handler & Dry Monads]
+  G -->|respond or error| E
+----
+
+== 3. Key Benefits
+
+=== 3.1 Automatic Discovery & Monitoring
+Leopard services auto-advertise on well-known NATS subjects. Clients can query:
+
+* `$SRV.PING.<name>` – discover live instances & measure RTT
+* `$SRV.INFO.<name>` – retrieve endpoint schemas & metadata
+* `$SRV.STATS.<name>` – fetch per-endpoint metrics
+
+No external service-registry (Consul, etcd) or custom HTTP health paths required.
+
+=== 3.2 Scaling-Per-Endpoint-Group
+Each endpoint (mapped to a NATS subject) is registered with an optional queue group.
+This allows it to enjoy native NATS queue-group load balancing. You can:
+
+* Scale thread-pooled workers independently per service
+* Horizontally add new service instances without redeploying clients
+* Isolate hot-paths (e.g. “reports.generate”) onto dedicated worker farms
+
+=== 3.3 Observability & Telemetry
+Leopard exposes stats out-of-the-box:
+
+* Request counts, error counts, processing time
+* Custom `on_stats` hooks for business metrics
+* Integration with Prometheus or any NATS-capable dashboard
+
+=== 3.4 Asynchronous, Resilient Communication
+Unlike blocking HTTP calls, Leopard’s NATS requests can:
+
+* Employ timeouts, retries, and dead-letter queues
+* Fit into event-driven pipelines, decoupling producers and consumers
+* Maintain throughput under partial outages
+
+== 4. Comparison with REST
+[cols="1,1,1", options="header"]
+|===
+| Feature                   | REST (HTTP)                                                | NATS ServiceApi
+
+| Discovery
+| Requires external service registry or API gateway, A.K.A. "it's always DNS"
+| Built-in via `$SRV.PING`, `$SRV.INFO`, `$SRV.STATS` Works uniformly across all languages
+
+| Load Balancing
+| HTTP load balancer or DNS round-robin
+| Native queue-group load balancing per subject
+
+| Telemetry
+| Custom instrumentation (e.g., `/metrics` endpoint)
+| Auto-collected stats (`service.stats`) and `on_stats` hooks
+
+| Latency & Overhead
+| Higher (HTTP/TCP handshake, headers, JSON)
+| Low-latency binary protocol with optional JSON payloads (other formats supported with plugins)
+
+| Communication Model
+| Synchronous, blocking request/response
+| Asynchronous request/reply, decoupled via subjects
+
+| Schema & Validation
+| OpenAPI/Swagger externally managed
+| Optional metadata on endpoints + pluggable middleware
+
+| Error Handling
+| HTTP status codes and response bodies
+| Standardized error headers (`Nats-Service-Error`, `Nats-Service-Error-Code`)
+
+| Multi-Language Support
+| Varies by framework; patterns differ per language
+| Uniform ServiceApi semantics with native clients in all major languages
+
+| Scalability
+| Scale replicas behind LB
+| Scale thread pools vertically + horizontal instances independently, by endpoint groups (or even a single endpoint)
+|===
+
+== 5. Trade-Offs & Considerations
+. **Dependency on NATS**
+  Leopard requires a healthy NATS cluster; network partition or broker outage impacts all services. (This is not unlike Redis or Postgres dependencies)
+. **Learning Curve**
+  Teams must understand NATS subjects, queue groups, and ServiceApi conventions. (Easier with helpers like Leopard’s `NatsApiServer`.)
+. **Language Support**
+  While Leopard is Ruby-centric, NATS ServiceApi is cross-language—other teams must adopt compatible clients. (And handle concurrency and error handling in their own way.)
+. **Subject Naming**
+  Adopting a consistent naming convention for subjects is crucial. This can be a challenge in large teams.
+  NATS can support a massive number of subjects. But to avoid confusion, subjects should have
+  clear, descriptive names that reflect the service and endpoint purpose.
+  There could (should?) be a central authoritative
+  document that defines the subject structure and naming conventions.
+  There should also be a "registry" of subjects,
+  that can be queried by developers to discover available subjects.
+  This can avoid confusion and ensure that all developers are on the same page and not conflicting with one another.
+
+== 6. What, then?
+Leopard’s NATS ServiceApi framework offers a powerful alternative to REST:
+zero-config discovery, per-endpoint scaling, rich observability, and asynchronous resilience.
+
+For high-throughput, low-latency microservice (nano-service?) ecosystems, Leopard can simplify infrastructure,
+reduce boilerplate, and improve operational visibility.
+
+Leopard's aim is to retain the expressiveness and composability of idiomatic Ruby, while leveraging
+NATS's ServiceApi performance and flexibility.
