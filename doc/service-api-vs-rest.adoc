@@ -1,0 +1,85 @@
+= Leopard Service-API Whitepaper
+:revdate: 2025-08-03
+:doctype: whitepaper
+
+== Abstract
+Leopard’s NATS Service-API brings full-featured service-to-service communication—complete with discovery, health checks, per-endpoint scaling, and observability—while preserving the simplicity and resilience of asynchronous messaging. This paper contrasts Leopard’s model with traditional REST, outlines its key benefits and trade-offs, and illustrates how Leopard can streamline microservice architectures.
+
+== 1. Introduction
+Microservices communicate most often via HTTP/REST today, but REST comes with overhead: service registries, load-balancers, schema/version endpoints, and brittle synchronous request patterns. Leopard leverages NATS’s Service-API layer to deliver:
+* **Automatic discovery** via `$SRV.PING/INFO/​STATS` subjects
+* **Dynamic load-balanced routing** with queue groups
+* **Built-in telemetry** (per-endpoint request counts, latencies, errors)
+* **Scalable workers** (Concurrent::FixedThreadPool currently)
+* **Asynchronous decoupling** for resilient flows
+
+== 2. Architecture Overview
+Leopard embeds a “mini web-framework” in Ruby, registering each endpoint on a NATS subject and grouping instances for load-sharing:
+
+[mermaid,flowchart]
+----
+flowchart LR
+  subgraph ServiceInstance
+    A[NatsApiServer.start] --> B(Registers endpoints)
+  end
+  subgraph NATS_Cluster
+    B --> C[$SRV.INFO.calc]
+    B --> D[calc.add queue group]
+  end
+  E[Client] -->|request("calc.add")| D
+  D --> F[Worker Thread pool]
+  F --> G[Handler & Dry::Monads]
+  G -->|respond()/respond_with_error()| E
+----
+
+== 3. Key Benefits
+
+=== 3.1 Automatic Discovery & Monitoring
+Leopard services auto-advertise on well-known NATS subjects. Clients can query:
+* `$SRV.PING.<name>` – discover live instances & measure RTT
+* `$SRV.INFO.<name>` – retrieve endpoint schemas & metadata
+* `$SRV.STATS.<name>` – fetch per-endpoint metrics
+
+No external service-registry (Consul, etcd) or custom HTTP health paths required.
+
+=== 3.2 Scaling-Per-Endpoint-Group
+Each endpoint—registered with an optional queue group—enjoys native NATS queue-group load balancing. You can:
+* Scale thread-pooled workers independently per service
+* Horizontally add new service instances without redeploying clients
+* Isolate hot-paths (e.g. “reports.generate”) onto dedicated worker farms
+
+=== 3.3 Observability & Telemetry
+Leopard exposes stats out-of-the-box:
+* Request counts, error counts, processing time
+* Custom `on_stats` hooks for business metrics
+* Integration with Prometheus or any NATS-capable dashboard
+
+=== 3.4 Asynchronous, Resilient Communication
+Unlike blocking HTTP calls, Leopard’s NATS requests can:
+* Employ timeouts, retries, and dead-letter queues
+* Fit into event-driven pipelines, decoupling producers and consumers
+* Maintain throughput under partial outages
+
+== 4. Comparison with REST
+[cols="1,1", options="header"]
+|===
+| Feature       | REST (HTTP)         | Leopard (NATS Service-API)
+
+| Discovery     | External registry   | Built-in `$SRV.*` subjects
+| Load-balancing| HTTP LB or DNS      | Native queue groups
+| Telemetry     | Custom endpoints    | Auto-collected stats
+| Latency       | Higher overhead     | Low-latency messaging
+| Coupling      | Synchronous         | Async, decoupled
+| Schema        | Swagger/OpenAPI     | Optional metadata on endpoints
+|===
+
+== 5. Trade-Offs & Considerations
+. **Dependency on NATS**
+  Leopard requires a healthy NATS cluster; network partition or broker outage impacts all services.
+. **Learning Curve**
+  Teams must understand NATS subjects, queue groups, and Service-API conventions.
+. **Language Support**
+  While Leopard is Ruby-centric, NATS Service-API is cross-language—other teams must adopt compatible clients.
+
+== 6. Conclusion
+Leopard’s NATS Service-API framework offers a powerful alternative to REST: zero-config discovery, per-endpoint scaling, rich observability, and asynchronous resilience. For high-throughput, low-latency microservice ecosystems, Leopard can simplify infrastructure, reduce boilerplate, and improve operational visibility—while retaining the expressiveness and composability of idiomatic Ruby.
