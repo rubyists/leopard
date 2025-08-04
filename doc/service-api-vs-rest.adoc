@@ -1,4 +1,4 @@
-= Leopard Service-API Whitepaper
+= NATS ServiceApi (via Leopard) vs REST
 :revdate: 2025-08-03
 :doctype: whitepaper
 
