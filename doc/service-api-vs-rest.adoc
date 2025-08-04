@@ -53,7 +53,8 @@ Leopard services auto-advertise on well-known NATS subjects. Clients can query:
 No external service-registry (Consul, etcd) or custom HTTP health paths required.
 
 === 3.2 Scaling-Per-Endpoint-Group
-Each endpoint—registered with an optional queue group—enjoys native NATS queue-group load balancing. You can:
+Each endpoint (mapped to a NATS subject) is registered with an optional queue group.
+This allows it to enjoy native NATS queue-group load balancing. You can:
 
 * Scale thread-pooled workers independently per service
 * Horizontally add new service instances without redeploying clients
