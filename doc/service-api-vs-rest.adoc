@@ -3,10 +3,17 @@
 :doctype: whitepaper
 
 == Abstract
-Leopard’s NATS Service-API brings full-featured service-to-service communication—complete with discovery, health checks, per-endpoint scaling, and observability—while preserving the simplicity and resilience of asynchronous messaging. This paper contrasts Leopard’s model with traditional REST, outlines its key benefits and trade-offs, and illustrates how Leopard can streamline microservice architectures.
+Leopard’s NATS Service-API brings full-featured service-to-service communication, comparable with REST/GRPC.
+Complete with discovery, health checks, per-endpoint scaling, and observability.
+Preserving the simplicity and resilience of asynchronous messaging, under the hood.
+This paper contrasts the NATS ServiceApi model with traditional REST,
+outlines its key benefits and trade-offs,
+and illustrates how Leopard can streamline microservice (and nanoservice) architectures.
 
 == 1. Introduction
-Microservices communicate most often via HTTP/REST today, but REST comes with overhead: service registries, load-balancers, schema/version endpoints, and brittle synchronous request patterns. Leopard leverages NATS’s Service-API layer to deliver:
+Microservices communicate most often via HTTP/REST today, but REST comes with overhead: service registries,
+load-balancers, schema/version endpoints, and brittle synchronous request patterns.
+Leopard leverages NATS’s Service-API layer to deliver:
 * **Automatic discovery** via `$SRV.PING/INFO/​STATS` subjects
 * **Dynamic load-balanced routing** with queue groups
 * **Built-in telemetry** (per-endpoint request counts, latencies, errors)
