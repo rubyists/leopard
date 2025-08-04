@@ -61,16 +61,45 @@ Unlike blocking HTTP calls, Leopard’s NATS requests can:
 * Maintain throughput under partial outages
 
 == 4. Comparison with REST
-[cols="1,1", options="header"]
+[cols="1,1,1", options="header"]
 |===
-| Feature       | REST (HTTP)         | Leopard (NATS Service-API)
+| Feature                   | REST (HTTP)                                                | NATS Service-API
 
-| Discovery     | External registry   | Built-in `$SRV.*` subjects
-| Load-balancing| HTTP LB or DNS      | Native queue groups
-| Telemetry     | Custom endpoints    | Auto-collected stats
-| Latency       | Higher overhead     | Low-latency messaging
-| Coupling      | Synchronous         | Async, decoupled
-| Schema        | Swagger/OpenAPI     | Optional metadata on endpoints
+| Discovery
+| Requires external service registry or API gateway
+| Built-in via `$SRV.PING`, `$SRV.INFO`, `$SRV.STATS`—works uniformly across all languages
+
+| Load Balancing
+| HTTP load balancer or DNS round-robin
+| Native queue-group load balancing per subject
+
+| Telemetry
+| Custom instrumentation (e.g., `/metrics` endpoint)
+| Auto-collected stats (`service.stats`) and `on_stats` hooks
+
+| Latency & Overhead
+| Higher (HTTP/TCP handshake, headers, JSON)
+| Low-latency binary protocol with optional JSON payloads
+
+| Communication Model
+| Synchronous, blocking request/response
+| Asynchronous request/reply, decoupled via subjects
+
+| Schema & Validation
+| OpenAPI/Swagger externally managed
+| Optional metadata on endpoints + pluggable middleware
+
+| Error Handling
+| HTTP status codes and response bodies
+| Standardized error headers (`Nats-Service-Error`, `Nats-Service-Error-Code`)
+
+| Multi-Language Support
+| Varies by framework; patterns differ per language
+| Uniform Service-API semantics with native clients in all major languages
+
+| Scalability
+| Scale replicas behind LB
+| Scale Ractor/thread pools + horizontal instances independently
 |===
 
 == 5. Trade-Offs & Considerations
