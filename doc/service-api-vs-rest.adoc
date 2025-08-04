@@ -4,8 +4,10 @@
 
 == Abstract
 Leopard’s NATS ServiceApi wrapper delivers full-featured service-to-service communication, comparable with REST/GRPC.
-With NATS, you get complete with discovery, health checks, per-endpoint scaling, and observability.
-This abstraction preserves the simplicity of REST request with the resilience of asynchronous messaging
+With NATS, you get discovery, health checks, and observability, all at the protocol layer.
+
+All Leopard does is add an Easy Button to serve these endpoints with concurrency to utilize multiple CPU cores.
+This abstraction preserves the simplicity of REST requests with the resilience of asynchronous messaging
 under the hood.
 
 This paper contrasts the NATS ServiceApi model with traditional REST, outlines its key benefits and trade-offs,
