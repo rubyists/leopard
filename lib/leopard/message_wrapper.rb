@@ -33,8 +33,8 @@ module Rubyists
       # @param code [Integer] The HTTP status code to use for the error response.
       #
       # @return [void]
-      def respond_with_error(err, code: 500)
-        raw.respond_with_error(err.to_s, code:)
+      def respond_with_error(err)
+        raw.respond_with_error(err.to_s)
       end
 
       private

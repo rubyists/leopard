@@ -15,8 +15,8 @@ class FakeMsg
     @responded_payload = payload
   end
 
-  def respond_with_error(err, code:)
-    @error_args = [err, code]
+  def respond_with_error(err)
+    @error_args = [err]
   end
 end
 
@@ -57,15 +57,15 @@ describe Rubyists::Leopard::MessageWrapper do # rubocop:disable Metrics/BlockLen
   end
 
   it 'responds with error' do
-    wrapper.respond_with_error('fail', code: 404)
+    wrapper.respond_with_error('fail')
 
-    assert_equal ['fail', 404], msg.error_args
+    assert_equal ['fail'], msg.error_args
   end
 
   it 'coerces exception objects to strings when responding with error' do
     err = StandardError.new('broken')
     wrapper.respond_with_error(err)
 
-    assert_equal ['broken', 500], msg.error_args
+    assert_equal ['broken'], msg.error_args
   end
 end
