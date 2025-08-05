@@ -33,11 +33,41 @@ module Rubyists
         base.setting :logger, default: Rubyists::Leopard.logger, reader: true
       end
 
+      # Represents an endpoint in the NATS API server.
+      # Each endpoint has a name, subject, queue, group, and a handler block.
+      # @!attribute [r] name - the name of the endpoint.
+      # @!attribute [r] subject - the NATS subject to listen on. Defaults to the endpoint name.
+      # @!attribute [r] queue - the NATS queue group to use for this endpoint, if any.
+      # @!attribute [r] group - the group this endpoint belongs to, if any.
+      # @!attribute [r] handler - the block that will handle incoming messages.
       Endpoint = Struct.new(:name, :subject, :queue, :group, :handler)
 
       module ClassMethods
+        # The endpoints defined for the NATS API server.
+        # Each endpoint is an instance of the Endpoint struct.
+        # @return [Array<Endpoint>]
         def endpoints = @endpoints ||= []
+
+        # The groups defined for organizing endpoints.
+        # Each group is a hash with keys :name, :parent, and :queue.
+        #
+        # @return [Hash<String, Hash>]
+        #
+        # @example
+        #   {
+        #     'group_name' => { name: 'group_name', parent: nil, queue: 'queue_name' }
+        #   }
         def groups = @groups ||= {}
+
+        # The middleware stack for processing messages.
+        # Each middleware is a tuple of [Class, args, block].
+        #
+        # @return [Array<Array<Class, Array, Proc>>]
+        #
+        # @example
+        #   use MyMiddleware, arg1, arg2 do |arg|
+        #     # block code
+        #   end
         def middleware = @middleware ||= []
 
         # Define an endpoint for the NATS API server.
