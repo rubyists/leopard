@@ -13,6 +13,18 @@ module Rubyists
       include Dry::Monads[:result]
       extend Dry::Monads[:result]
 
+      # This method extends the class with ClassMethods and InstanceMethods,
+      # and configures the default logger for the NATS API server.
+      #
+      # @param base [Class] The class that includes this module.
+      #
+      # @return [void]
+      #
+      # @example Including the NatsApiServer module
+      #   class MyNatsApiServer
+      #     include Rubyists::Leopard::NatsApiServer
+      #     logger = MyLogger.new
+      #   end
       def self.included(base)
         base.extend(ClassMethods)
         base.include(InstanceMethods)
