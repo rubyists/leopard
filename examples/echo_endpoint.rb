@@ -12,6 +12,7 @@ class EchoService
   end
 
   endpoint(:echo) { |msg| Success(msg.data) }
+  endpoint(:echo_fail) { |msg| Failure({ failure: '*boom*', data: msg.data }.to_json) }
 end
 
 if __FILE__ == $PROGRAM_NAME
@@ -22,6 +23,6 @@ if __FILE__ == $PROGRAM_NAME
       version: '1.0.0',
       instance_args: [2],
     },
-    instances: 4,
+    instances: 1,
   )
 end
