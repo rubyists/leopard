@@ -12,7 +12,7 @@ class EchoService
   end
 
   endpoint(:echo) { |msg| Success(msg.data) }
-  endpoint(:echo_fail) { |msg| Failure({ failure: '*boom*', data: msg.data }.to_json) }
+  endpoint(:echo_fail) { |msg| Failure({ failure: '*boom*', data: msg.data }) }
 end
 
 if __FILE__ == $PROGRAM_NAME
