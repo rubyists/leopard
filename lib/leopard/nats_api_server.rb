@@ -97,9 +97,7 @@ module Rubyists
           @instance_args = opts.delete(:instance_args) || nil
           logger.info "Building #{count} workers with options: #{opts.inspect}, instance_args: #{@instance_args}"
           count.times do
-            eps = endpoints.dup
-            gps = groups.dup
-            pool.post { build_worker(url, opts, eps, gps, workers) }
+            pool.post { build_worker(url, opts, workers) }
           end
           pool
         end
@@ -113,10 +111,10 @@ module Rubyists
         # @param workers [Array] The array to store worker instances.
         #
         # @return [void]
-        def build_worker(url, opts, eps, gps, workers)
+        def build_worker(url, opts, workers)
           worker = @instance_args ? new(*@instance_args) : new
           workers << worker
-          worker.setup_worker(url, opts, eps, gps)
+          worker.setup_worker!(nats_url: url, service_opts: opts)
         end
 
         # Shuts down the NATS API server gracefully.
@@ -174,7 +172,6 @@ module Rubyists
 
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
-        # and keeps the worker thread alive.
         #
         # @param url [String] The URL of the NATS server.
         # @param opts [Hash] Options for the NATS service.
@@ -182,12 +179,21 @@ module Rubyists
         # @param gps [Hash] The groups to add.
         #
         # @return [void]
-        def setup_worker(url, opts, eps, gps)
+        def setup_worker(nats_url: 'nats://localhost:4222', service_opts: {})
           @thread  = Thread.current
-          @client  = NATS.connect url
-          @service = @client.services.add(**opts)
+          @client  = NATS.connect nats_url
+          @service = @client.services.add(build_service_opts(service_opts:))
+          gps = self.class.groups.dup
+          eps = self.class.endpoints.dup
           group_map = add_groups(gps)
           add_endpoints eps, group_map
+        end
+
+        # Sets up a worker thread for the NATS API server and blocks the current thread.
+        #
+        # @see #setup_worker
+        def setup_worker!(nats_url: 'nats://localhost:4222', service_opts: {})
+          setup_worker(nats_url:, service_opts:)
           sleep
         end
 
@@ -201,6 +207,18 @@ module Rubyists
         end
 
         private
+
+        # Builds the service options for the NATS service.
+        #
+        # @param service_opts [Hash] Options for the NATS service.
+        #
+        # @return [Hash] The complete service options including name and version.
+        def build_service_opts(service_opts:)
+          {
+            name: self.class.name.split('::').join('.'),
+            version: '0.1.0',
+          }.merge(service_opts)
+        end
 
         # Adds groups to the NATS service.
         #
