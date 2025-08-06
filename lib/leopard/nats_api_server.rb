@@ -75,7 +75,7 @@ module Rubyists
         def run(nats_url:, service_opts:, instances: 1, blocking: true)
           logger.info 'Booting NATS API server...'
           workers = Concurrent::Array.new
-          pool = spawn_instances(nats_url, service_opts, instances, workers)
+          pool = spawn_instances(nats_url, service_opts, instances, workers, blocking)
           logger.info 'Setting up signal trap...'
           trap_signals(workers, pool)
           return pool unless blocking
@@ -90,16 +90,16 @@ module Rubyists
         # @param url [String] The URL of the NATS server.
         # @param opts [Hash] Options for the NATS service.
         # @param count [Integer] The number of instances to spawn.
+        # @param workers [Array] The array to store worker instances.
+        # @param blocking [Boolean] If false, does not block current thread after starting the server.
         #
         # @return [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
-        def spawn_instances(url, opts, count, workers)
+        def spawn_instances(url, opts, count, workers, blocking)
           pool = Concurrent::FixedThreadPool.new(count)
           @instance_args = opts.delete(:instance_args) || nil
           logger.info "Building #{count} workers with options: #{opts.inspect}, instance_args: #{@instance_args}"
           count.times do
-            eps = endpoints.dup
-            gps = groups.dup
-            pool.post { build_worker(url, opts, eps, gps, workers) }
+            pool.post { build_worker(url, opts, workers, blocking) }
           end
           pool
         end
@@ -108,15 +108,16 @@ module Rubyists
         #
         # @param url [String] The URL of the NATS server.
         # @param opts [Hash] Options for the NATS service.
-        # @param eps [Array<Hash>] The list of endpoints to add.
-        # @param gps [Hash] The groups to add.
         # @param workers [Array] The array to store worker instances.
+        # @param blocking [Boolean] If true, blocks the current thread until the worker is set up.
         #
         # @return [void]
-        def build_worker(url, opts, eps, gps, workers)
+        def build_worker(url, opts, workers, blocking)
           worker = @instance_args ? new(*@instance_args) : new
           workers << worker
-          worker.setup_worker(url, opts, eps, gps)
+          return worker.setup_worker!(nats_url: url, service_opts: opts) if blocking
+
+          worker.setup_worker(nats_url: url, service_opts: opts)
         end
 
         # Shuts down the NATS API server gracefully.
@@ -174,7 +175,6 @@ module Rubyists
 
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
-        # and keeps the worker thread alive.
         #
         # @param url [String] The URL of the NATS server.
         # @param opts [Hash] Options for the NATS service.
@@ -182,12 +182,21 @@ module Rubyists
         # @param gps [Hash] The groups to add.
         #
         # @return [void]
-        def setup_worker(url, opts, eps, gps)
+        def setup_worker(nats_url: 'nats://localhost:4222', service_opts: {})
           @thread  = Thread.current
-          @client  = NATS.connect url
-          @service = @client.services.add(**opts)
+          @client  = NATS.connect nats_url
+          @service = @client.services.add(build_service_opts(service_opts:))
+          gps = self.class.groups.dup
+          eps = self.class.endpoints.dup
           group_map = add_groups(gps)
           add_endpoints eps, group_map
+        end
+
+        # Sets up a worker thread for the NATS API server and blocks the current thread.
+        #
+        # @see #setup_worker
+        def setup_worker!(nats_url: 'nats://localhost:4222', service_opts: {})
+          setup_worker(nats_url:, service_opts:)
           sleep
         end
 
@@ -201,6 +210,18 @@ module Rubyists
         end
 
         private
+
+        # Builds the service options for the NATS service.
+        #
+        # @param service_opts [Hash] Options for the NATS service.
+        #
+        # @return [Hash] The complete service options including name and version.
+        def build_service_opts(service_opts:)
+          {
+            name: self.class.name.split('::').join('.'),
+            version: '0.1.0',
+          }.merge(service_opts)
+        end
 
         # Adds groups to the NATS service.
         #
