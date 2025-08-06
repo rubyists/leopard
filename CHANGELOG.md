@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7](https://github.com/rubyists/leopard/compare/v0.1.6...v0.1.7) (2025-08-06)
+
+
+### Bug Fixes
+
+* Allow non blocking all the way down to the instance level ([#27](https://github.com/rubyists/leopard/issues/27)) ([01748a5](https://github.com/rubyists/leopard/commit/01748a56bc927ee1dbc70d2351fd12037e5b4bef))
+* Stop sending code argument to respond_with_error, it does not accept it ([#23](https://github.com/rubyists/leopard/issues/23)) ([9d87b8c](https://github.com/rubyists/leopard/commit/9d87b8c308a1fdff72769863711bb6bb942b3677))
+
 ## [0.1.6](https://github.com/rubyists/leopard/compare/v0.1.5...v0.1.6) (2025-08-03)
 
 
