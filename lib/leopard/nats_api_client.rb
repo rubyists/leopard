@@ -180,10 +180,8 @@ module Rubyists
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
         #
-        # @param url [String] The URL of the NATS server.
-        # @param opts [Hash] Options for the NATS service.
-        # @param eps [Array<Hash>] The list of endpoints to add.
-        # @param gps [Hash] The groups to add.
+        # @param nats_url [String] The URL of the NATS server.
+        # @param service_opts [Hash] Options for the NATS service.
         #
         # @return [void]
         def setup_worker(nats_url: 'nats://localhost:4222', service_opts: {})
