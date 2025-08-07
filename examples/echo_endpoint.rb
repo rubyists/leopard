@@ -11,7 +11,7 @@ class EchoService
     logger.info "EchoService initialized with a_var: #{a_var}"
   end
 
-  endpoint(:echo) { |msg| require 'pry'; binding.pry; Success(msg.data) }
+  endpoint(:echo) { |msg| Success(msg.data) }
   endpoint(:echo_fail) { |msg| Failure({ failure: '*boom*', data: msg.data }) }
 end
 

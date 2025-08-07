@@ -10,10 +10,11 @@ module Rubyists
       #
       # @!attribute [r] data
       # @return [Object] The parsed data from the NATS message.
+      attr_reader :raw, :data
       #
-      # @!attribute [r] headers
+      # @!attribute [w] headers
       # @return [Hash] The headers from the NATS message.
-      attr_reader :raw, :data, :headers
+      attr_accessor :headers
 
       # @param nats_msg [NATS::Message] The NATS message to wrap.
       def initialize(nats_msg)
