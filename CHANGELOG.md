@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/rubyists/leopard/compare/v0.1.7...v0.2.0) (2025-08-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* Big move to use kwargs as the initializer for classes which include us ([#28](https://github.com/rubyists/leopard/issues/28))
+
+### Bug Fixes
+
+* Big move to use kwargs as the initializer for classes which include us ([#28](https://github.com/rubyists/leopard/issues/28)) ([72293b4](https://github.com/rubyists/leopard/commit/72293b434998679fe3ff2d467a6a39c11a325b5a))
+
 ## [0.1.7](https://github.com/rubyists/leopard/compare/v0.1.6...v0.1.7) (2025-08-06)
 
 
