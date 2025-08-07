@@ -26,6 +26,7 @@ module Rubyists
       #
       # @return [void]
       def respond(payload)
+        raw.header = headers
         raw.respond(serialize(payload))
       end
 
