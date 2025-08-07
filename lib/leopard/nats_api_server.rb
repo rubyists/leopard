@@ -108,8 +108,8 @@ module Rubyists
 
         # Builds a worker instance and sets it up with the NATS server.
         #
-        # @param url [String] The URL of the NATS server.
-        # @param opts [Hash] Options for the NATS service.
+        # @param nats_url [String] The URL of the NATS server.
+        # @param service_opts [Hash] Options for the NATS service.
         # @param workers [Array] The array to store worker instances.
         # @param blocking [Boolean] If true, blocks the current thread until the worker is set up.
         #
