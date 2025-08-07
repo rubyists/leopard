@@ -27,7 +27,7 @@ module Rubyists
       #
       # @return [void]
       def respond(payload)
-        raw.header = headers
+        raw.header = headers unless headers.empty?
         raw.respond(serialize(payload))
       end
 
