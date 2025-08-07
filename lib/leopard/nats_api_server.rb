@@ -98,6 +98,8 @@ module Rubyists
           pool = Concurrent::FixedThreadPool.new(count)
           @instance_args = opts.delete(:instance_args) || nil
           logger.info "Building #{count} workers with options: #{opts.inspect}, instance_args: #{@instance_args}"
+          raise ArgumentError, 'instance_args must be a Hash' if @instance_args && !@instance_args.is_a?(Hash)
+
           count.times do
             pool.post { build_worker(url, opts, workers, blocking) }
           end
@@ -106,18 +108,19 @@ module Rubyists
 
         # Builds a worker instance and sets it up with the NATS server.
         #
-        # @param url [String] The URL of the NATS server.
-        # @param opts [Hash] Options for the NATS service.
+        # @param nats_url [String] The URL of the NATS server.
+        # @param service_opts [Hash] Options for the NATS service.
         # @param workers [Array] The array to store worker instances.
         # @param blocking [Boolean] If true, blocks the current thread until the worker is set up.
         #
         # @return [void]
-        def build_worker(url, opts, workers, blocking)
-          worker = @instance_args ? new(*@instance_args) : new
+        def build_worker(nats_url, service_opts, workers, blocking)
+          worker = @instance_args ? new(**@instance_args) : new
           workers << worker
-          return worker.setup_worker!(nats_url: url, service_opts: opts) if blocking
+          args = { nats_url:, service_opts: }
+          return worker.setup_worker!(**args) if blocking
 
-          worker.setup_worker(nats_url: url, service_opts: opts)
+          worker.setup_worker(**args)
         end
 
         # Shuts down the NATS API server gracefully.

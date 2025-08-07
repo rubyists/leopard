@@ -4,7 +4,8 @@ require 'helper'
 require 'leopard/message_wrapper'
 
 class FakeMsg
-  attr_reader :data, :header, :responded_payload, :error_args
+  attr_reader :data, :responded_payload, :error_args
+  attr_accessor :header
 
   def initialize(data, header = {})
     @data = data

@@ -7,7 +7,7 @@ require_relative '../lib/leopard/nats_api_server'
 class EchoService
   include Rubyists::Leopard::NatsApiServer
 
-  def initialize(a_var = 1)
+  def initialize(a_var: 1)
     logger.info "EchoService initialized with a_var: #{a_var}"
   end
 
@@ -21,7 +21,7 @@ if __FILE__ == $PROGRAM_NAME
     service_opts: {
       name: 'example.echo',
       version: '1.0.0',
-      instance_args: [2],
+      instance_args: { a_var: 2 },
     },
     instances: 1,
   )
