@@ -16,6 +16,8 @@ class EchoService
 end
 
 if __FILE__ == $PROGRAM_NAME
+  SemanticLogger.default_level = :info
+  SemanticLogger.add_appender(io: $stdout, formatter: :color)
   EchoService.run(
     nats_url: 'nats://localhost:4222',
     service_opts: {
