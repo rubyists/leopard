@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/rubyists/leopard/compare/v0.2.0...v0.2.1) (2025-08-08)
+
+
+### Bug Fixes
+
+* Do not leak SemanticLogger settings outside of isolation ([#30](https://github.com/rubyists/leopard/issues/30)) ([524595c](https://github.com/rubyists/leopard/commit/524595c37f114ec28f40abc841ecb3c7b6579f5a))
+
 ## [0.2.0](https://github.com/rubyists/leopard/compare/v0.1.7...v0.2.0) (2025-08-07)
 
 
