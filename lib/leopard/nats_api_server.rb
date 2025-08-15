@@ -162,7 +162,7 @@ module Rubyists
 
         # Wakes up the main thread to allow it to continue execution after the server is stopped.
         # This is useful when the server is running in a blocking mode.
-        # If the main thread is not blocked, this method does nothing.
+        # If the main thread is not blocked, this method does just exits.
         #
         # @return [void]
         def wake_main_thread_and_exit!
