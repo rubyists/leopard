@@ -138,7 +138,7 @@ module Rubyists
             logger.warn 'Pool is shut down, waiting for termination!'
             pool.wait_for_termination
             logger.warn 'Bye bye!'
-            wake_main_thread
+            wake_main_thread_and_exit!
           end
         end
 
@@ -162,13 +162,16 @@ module Rubyists
 
         # Wakes up the main thread to allow it to continue execution after the server is stopped.
         # This is useful when the server is running in a blocking mode.
-        # If the main thread is not blocked, this method does nothing.
+        # If the main thread is not blocked, this method does just exits.
         #
         # @return [void]
-        def wake_main_thread
+        def wake_main_thread_and_exit!
           Thread.main.wakeup
+          exit 0
         rescue ThreadError
-          nil
+          exit 0
+        rescue StandardError
+          exit 1
         end
       end
 
