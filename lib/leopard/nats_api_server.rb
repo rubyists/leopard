@@ -167,10 +167,11 @@ module Rubyists
         # @return [void]
         def wake_main_thread_and_exit!
           Thread.main.wakeup
+          exit 0
         rescue ThreadError
-          nil
-        ensure
-          exit
+          exit 0
+        rescue StandardError
+          exit 1
         end
       end
 
