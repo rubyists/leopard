@@ -3,6 +3,11 @@
 module Rubyists
   module Leopard
     class LeopardError < StandardError
+      def initialize(...)
+        super
+        set_backtrace(caller)
+      end
+
       def backtrace
         super[0..3] + ['... (truncated by Leopard)']
       end
