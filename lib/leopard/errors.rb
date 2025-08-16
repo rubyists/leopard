@@ -9,7 +9,7 @@ module Rubyists
       end
 
       def backtrace
-        super[0..3] + ['... (truncated by Leopard)']
+        (super || [])[0..3] + ['... (truncated by Leopard)']
       end
     end
 
