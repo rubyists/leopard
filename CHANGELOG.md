@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/rubyists/leopard/compare/v0.2.1...v0.2.2) (2025-08-15)
+
+
+### Bug Fixes
+
+* Ensure we exit after saying Bye Bye ([#33](https://github.com/rubyists/leopard/issues/33)) ([11a7584](https://github.com/rubyists/leopard/commit/11a7584dd88e7c7fb4dbfde613b8186dc4253892))
+
 ## [0.2.1](https://github.com/rubyists/leopard/compare/v0.2.0...v0.2.1) (2025-08-08)
 
 
