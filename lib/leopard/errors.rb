@@ -9,7 +9,13 @@ module Rubyists
       end
 
       def backtrace
-        (super || [])[0..3] + ['... (truncated by Leopard)']
+        # If the backtrace is nil, return an empty array
+        orig = (super || [])[0..3]
+        # If the backtrace is less than 4 lines, return it as is
+        return orig if orig.size < 4
+
+        # Otherwise, add a note indicating truncation
+        orig + ['... (truncated by Leopard)']
       end
     end
 
