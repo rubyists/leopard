@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/rubyists/leopard/compare/v0.2.2...v0.2.3) (2025-08-16)
+
+
+### Bug Fixes
+
+* [#35](https://github.com/rubyists/leopard/issues/35) - Limits the backtrace to 4 lines in our exceptions ([#36](https://github.com/rubyists/leopard/issues/36)) ([df0fee8](https://github.com/rubyists/leopard/commit/df0fee8373fc0088cd61abcc3e6d963e957730b6))
+
 ## [0.2.2](https://github.com/rubyists/leopard/compare/v0.2.1...v0.2.2) (2025-08-15)
 
 
