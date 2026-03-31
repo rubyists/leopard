@@ -4,7 +4,7 @@ require 'helper'
 require 'leopard/message_wrapper'
 
 class FakeMsg
-  attr_reader :data, :responded_payload, :error_args
+  attr_reader :data, :responded_payload, :error_args, :error_block_called_with
   attr_accessor :header
 
   def initialize(data, header = {})
@@ -18,6 +18,11 @@ class FakeMsg
 
   def respond_with_error(err)
     @error_args = [err]
+    return unless block_given?
+
+    yielded_error = {}
+    yield yielded_error
+    @error_block_called_with = yielded_error
   end
 end
 
@@ -63,10 +68,23 @@ describe Rubyists::Leopard::MessageWrapper do # rubocop:disable Metrics/BlockLen
     assert_equal ['fail'], msg.error_args
   end
 
-  it 'coerces exception objects to strings when responding with error' do
+  it 'passes exception objects through when responding with error' do
     err = StandardError.new('broken')
     wrapper.respond_with_error(err)
 
-    assert_equal ['broken'], msg.error_args
+    assert_equal [err], msg.error_args
+  end
+
+  it 'passes hash payloads through when responding with error' do
+    err = { 'description' => 'broken', 'code' => 422 }
+    wrapper.respond_with_error(err)
+
+    assert_equal [err], msg.error_args
+  end
+
+  it 'forwards blocks when responding with error' do
+    wrapper.respond_with_error(code: 422) { |error| error[:code] = 422 }
+
+    assert_equal({ code: 422 }, msg.error_block_called_with)
   end
 end

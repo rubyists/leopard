@@ -139,12 +139,15 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
 
   it 'responds with error when handler raises' do
     raw_msg = Object.new
-    wrapper = Minitest::Mock.new
-    wrapper.expect(:respond_with_error, nil, ['boom'])
+    err = nil
+    wrapper = Object.new
+    wrapper.define_singleton_method(:respond_with_error) { |raised| err = raised }
     Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
       @instance.send(:handle_message, raw_msg, proc { raise 'boom' })
     end
-    wrapper.verify
+
+    assert_instance_of RuntimeError, err
+    assert_equal 'boom', err.message
   end
 
   it 'responds when processing Success result' do
@@ -159,6 +162,15 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     wrapper = Minitest::Mock.new
     wrapper.expect(:respond_with_error, nil, ['fail'])
     result = Rubyists::Leopard::NatsApiServer::Failure.new('fail')
+    @instance.send(:process_result, wrapper, result)
+    wrapper.verify
+  end
+
+  it 'passes hash failures through unchanged' do
+    err = { code: 422, description: 'invalid' }
+    wrapper = Minitest::Mock.new
+    wrapper.expect(:respond_with_error, nil, [err])
+    result = Rubyists::Leopard::NatsApiServer::Failure.new(err)
     @instance.send(:process_result, wrapper, result)
     wrapper.verify
   end
