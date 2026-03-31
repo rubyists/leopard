@@ -313,7 +313,7 @@ module Rubyists
           process_result(wrapper, result)
         rescue StandardError => e
           logger.error 'Error processing message: ', e
-          wrapper.respond_with_error(e.message)
+          wrapper.respond_with_error(e)
         end
 
         # Processes the result of the handler execution.
