@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/rubyists/leopard/compare/v0.2.3...v0.2.4) (2026-03-31)
+
+
+### Bug Fixes
+
+* preserve respond_with_error payloads ([#40](https://github.com/rubyists/leopard/issues/40)) ([f5c0d46](https://github.com/rubyists/leopard/commit/f5c0d463ec85556c731da1251897f27f2816310b))
+
 ## [0.2.3](https://github.com/rubyists/leopard/compare/v0.2.2...v0.2.3) (2025-08-16)
 
 
