@@ -4,6 +4,7 @@ require 'json'
 
 module Rubyists
   module Leopard
+    # Wraps a raw NATS message with parsed payload and convenience response helpers.
     class MessageWrapper
       # @!attribute [r] raw
       # @return [NATS::Message] The original NATS message.

@@ -8,6 +8,11 @@ class EchoService
   include Rubyists::Leopard::NatsApiServer
 
   config.logger = SemanticLogger[:EchoService]
+
+  # Builds the example service instance.
+  #
+  # @param a_var [Integer] Example initializer state passed through `instance_args`.
+  # @return [void]
   def initialize(a_var: 1)
     logger.info "EchoService initialized with a_var: #{a_var}"
   end

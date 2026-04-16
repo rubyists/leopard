@@ -138,6 +138,20 @@ $ bundle exec rake ci
 This task starts NATS JetStream through `./ci/nats/start.sh`, waits for broker health,
 runs RuboCop and the test suite, and then stops the broker.
 
+API documentation can be generated with:
+
+[source,bash]
+----
+$ bundle exec rake yard
+----
+
+Documentation coverage is enforced with:
+
+[source,bash]
+----
+$ bundle exec rake yard:verify
+----
+
 If you want to run the broker yourself, the same script can still be used directly:
 
 [source,bash]

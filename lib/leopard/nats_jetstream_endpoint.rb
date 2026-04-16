@@ -2,6 +2,7 @@
 
 module Rubyists
   module Leopard
+    # Configuration for a Leopard JetStream pull-consumer endpoint.
     NatsJetstreamEndpoint = Struct.new(
       :name,
       :stream,
