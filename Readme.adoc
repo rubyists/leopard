@@ -12,6 +12,7 @@ minimal DSL for defining endpoints and middleware.
 == Features
 
 * Declarative endpoint definitions with `#endpoint`.
+* Declarative JetStream pull consumers with `#jetstream_endpoint`.
 * Grouping of endpoints with `#group`
 * Simple concurrency via `#run` with a configurable number of instances.
 * JSON aware message wrapper that gracefully handles parse errors.
@@ -90,13 +91,58 @@ end
 EchoService.use LoggerMiddleware
 ----
 
+== JetStream Pull Consumers
+
+Leopard can also bind JetStream pull consumers through the same middleware and `Dry::Monads::Result`
+handler contract used by request/reply endpoints.
+
+[source,ruby]
+----
+class EventConsumer
+  include Rubyists::Leopard::NatsApiServer
+
+  jetstream_endpoint(
+    :events,
+    stream: 'EVENTS',
+    subject: 'events.created',
+    durable: 'events-created-worker',
+    consumer: { max_deliver: 5 },
+    batch: 5,
+    fetch_timeout: 1,
+    nak_delay: 2,
+  ) do |msg|
+    Success(msg.data)
+  end
+end
+----
+
+JetStream handlers receive the same `Rubyists::Leopard::MessageWrapper` as service endpoints.
+Leopard will:
+
+* `ack` on `Success`
+* `nak` on `Failure` (`nak_delay:` is optional)
+* `term` on unhandled exceptions
+
+Each Leopard `instances:` worker creates its own pull subscription loop, so JetStream consumers
+scale with the same process-local concurrency model as the rest of the framework.
+
 == Development
 
 The project uses Minitest and RuboCop. Run tests with Rake:
 
 [source,bash]
 ----
-$ bundle exec rake
+$ bundle exec rake ci
+----
+
+This task starts NATS JetStream through `./ci/nats/start.sh`, waits for broker health,
+runs RuboCop and the test suite, and then stops the broker.
+
+If you want to run the broker yourself, the same script can still be used directly:
+
+[source,bash]
+----
+$ ./ci/nats/start.sh
 ----
 
 === Conventional Commits (semantic commit messages)

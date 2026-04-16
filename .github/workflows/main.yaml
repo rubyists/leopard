@@ -13,10 +13,6 @@ jobs:
       matrix:
         ruby:
           - '3.4.5'
-    services:
-      nats:
-        image: nats:latest
-        ports: ["4222:4222", "6222:6222", "8222:8222"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Ruby
@@ -26,7 +22,9 @@ jobs:
           bundler-cache: false
       - name: Install dependencies
         run: bundle install --jobs 4 --retry 3
-      - name: Run the default task
-        run: bundle exec rake
+      - name: Run CI task
+        run: bundle exec rake ci
         env:
-          NATS_URI: nats://nats:4222
+          NATS_URI: nats://127.0.0.1:4222
+          LEOPARD_NATS_URL: nats://127.0.0.1:4222
+          NATS_NAME: leopard-nats
