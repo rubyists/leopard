@@ -22,7 +22,7 @@ jobs:
       max-parallel: 5
       matrix:
         alpine-version: ['3.20']
-        ruby-version: ['3.4.1']
+        ruby-version: ['4.0.2']
     steps:
       -
         name: Checkout repository
