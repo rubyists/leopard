@@ -7,6 +7,7 @@ gemspec
 
 group :development, :test do
   gem 'asciidoctor'
+  gem 'irb'
   gem 'minitest'
   gem 'minitest-global_expectations'
   gem 'pry'
