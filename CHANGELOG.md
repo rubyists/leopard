@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.2.5](https://github.com/rubyists/leopard/compare/v0.2.4...v0.2.5) (2026-04-16)
+
+
+### Features
+
+* add optional prometheus metrics endpoint with saturation metrics ([#42](https://github.com/rubyists/leopard/issues/42)) ([fcd767a](https://github.com/rubyists/leopard/commit/fcd767ab5438c92bf50800d50027b43b7d0f9f0e))
+
+## [0.2.4](https://github.com/rubyists/leopard/compare/v0.2.3...v0.2.4) (2026-03-31)
+
+
+### Bug Fixes
+
+* preserve respond_with_error payloads ([#40](https://github.com/rubyists/leopard/issues/40)) ([f5c0d46](https://github.com/rubyists/leopard/commit/f5c0d463ec85556c731da1251897f27f2816310b))
+
+## [0.2.3](https://github.com/rubyists/leopard/compare/v0.2.2...v0.2.3) (2025-08-16)
+
+
+### Bug Fixes
+
+* [#35](https://github.com/rubyists/leopard/issues/35) - Limits the backtrace to 4 lines in our exceptions ([#36](https://github.com/rubyists/leopard/issues/36)) ([df0fee8](https://github.com/rubyists/leopard/commit/df0fee8373fc0088cd61abcc3e6d963e957730b6))
+
+## [0.2.2](https://github.com/rubyists/leopard/compare/v0.2.1...v0.2.2) (2025-08-15)
+
+
+### Bug Fixes
+
+* Ensure we exit after saying Bye Bye ([#33](https://github.com/rubyists/leopard/issues/33)) ([11a7584](https://github.com/rubyists/leopard/commit/11a7584dd88e7c7fb4dbfde613b8186dc4253892))
+
 ## [0.2.1](https://github.com/rubyists/leopard/compare/v0.2.0...v0.2.1) (2025-08-08)
 
 

@@ -1,0 +1,17 @@
+# HELP leopard_subject_busy_instances Instances currently processing a message on this subject
+# TYPE leopard_subject_busy_instances gauge
+<% subjects.each do |subject| -%>
+leopard_subject_busy_instances{subject="<%= subject %>"} <%= busy[subject] %>
+<% end -%>
+
+# HELP leopard_subject_total_instances Total Leopard instances in this process
+# TYPE leopard_subject_total_instances gauge
+<% subjects.each do |subject| -%>
+leopard_subject_total_instances{subject="<%= subject %>"} <%= total %>
+<% end -%>
+
+# HELP leopard_subject_pending_messages Messages pending processing across all instances
+# TYPE leopard_subject_pending_messages gauge
+<% subjects.each do |subject| -%>
+leopard_subject_pending_messages{subject="<%= subject %>"} <%= pending[subject] %>
+<% end -%>

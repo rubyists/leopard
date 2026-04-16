@@ -139,12 +139,15 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
 
   it 'responds with error when handler raises' do
     raw_msg = Object.new
-    wrapper = Minitest::Mock.new
-    wrapper.expect(:respond_with_error, nil, ['boom'])
+    err = nil
+    wrapper = Object.new
+    wrapper.define_singleton_method(:respond_with_error) { |raised| err = raised }
     Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
       @instance.send(:handle_message, raw_msg, proc { raise 'boom' })
     end
-    wrapper.verify
+
+    assert_instance_of RuntimeError, err
+    assert_equal 'boom', err.message
   end
 
   it 'responds when processing Success result' do
@@ -161,5 +164,70 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     result = Rubyists::Leopard::NatsApiServer::Failure.new('fail')
     @instance.send(:process_result, wrapper, result)
     wrapper.verify
+  end
+
+  it 'passes hash failures through unchanged' do
+    err = { code: 422, description: 'invalid' }
+    wrapper = Minitest::Mock.new
+    wrapper.expect(:respond_with_error, nil, [err])
+    result = Rubyists::Leopard::NatsApiServer::Failure.new(err)
+    @instance.send(:process_result, wrapper, result)
+    wrapper.verify
+  end
+
+  describe 'prometheus metrics' do # rubocop:disable Metrics/BlockLength
+    let(:available_struct) { Struct.new(:zero?) { def available_permits = self } }
+    let(:queue_struct) { Struct.new(:pending_size) { def size = pending_size } }
+    let(:handler_struct) { Struct.new(:concurrency_semaphore, :pending_queue) }
+    let(:endpoint_struct) do
+      Struct.new(:subject) do
+        def initialize(subject, handler)
+          super(subject)
+          @handler = handler
+        end
+      end
+    end
+    let(:service_struct) { Struct.new(:endpoints) }
+    let(:worker_struct) do
+      Struct.new(:service) do
+        def instance_variable_get(name)
+          return service if name == :@service
+
+          super
+        end
+      end
+    end
+    let(:expected_metrics) do
+      <<~METRICS
+        # HELP leopard_subject_busy_instances Instances currently processing a message on this subject
+        # TYPE leopard_subject_busy_instances gauge
+        leopard_subject_busy_instances{subject="alpha"} 1
+        leopard_subject_busy_instances{subject="beta"} 0
+
+        # HELP leopard_subject_total_instances Total Leopard instances in this process
+        # TYPE leopard_subject_total_instances gauge
+        leopard_subject_total_instances{subject="alpha"} 2
+        leopard_subject_total_instances{subject="beta"} 2
+
+        # HELP leopard_subject_pending_messages Messages pending processing across all instances
+        # TYPE leopard_subject_pending_messages gauge
+        leopard_subject_pending_messages{subject="alpha"} 5
+        leopard_subject_pending_messages{subject="beta"} 1
+      METRICS
+    end
+
+    it 'renders prometheus metrics from the erb template' do
+      workers = [
+        worker_struct.new(service_struct.new([
+          endpoint_struct.new('alpha', handler_struct.new(available_struct.new(true), queue_struct.new(3))),
+          endpoint_struct.new('beta', handler_struct.new(available_struct.new(false), queue_struct.new(1))),
+        ])),
+        worker_struct.new(service_struct.new([
+          endpoint_struct.new('alpha', handler_struct.new(available_struct.new(false), queue_struct.new(2))),
+        ])),
+      ]
+
+      assert_equal expected_metrics, @klass.send(:prometheus_metrics, workers)
+    end
   end
 end

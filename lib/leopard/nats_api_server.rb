@@ -6,6 +6,7 @@ require 'dry/configurable'
 require 'concurrent'
 require_relative '../leopard'
 require_relative 'message_wrapper'
+require_relative 'metrics_server'
 
 module Rubyists
   module Leopard
@@ -24,6 +25,8 @@ module Rubyists
       Endpoint = Struct.new(:name, :subject, :queue, :group, :handler)
 
       module ClassMethods
+        include MetricsServer
+
         def endpoints = @endpoints ||= []
         def groups = @groups ||= {}
         def middleware = @middleware ||= []
@@ -78,6 +81,7 @@ module Rubyists
           pool = spawn_instances(nats_url, service_opts, instances, workers, blocking)
           logger.info 'Setting up signal trap...'
           trap_signals(workers, pool)
+          start_metrics_server(workers) if ENV['LEOPARD_METRICS_PORT']
           return pool unless blocking
 
           sleep
@@ -313,7 +317,7 @@ module Rubyists
           process_result(wrapper, result)
         rescue StandardError => e
           logger.error 'Error processing message: ', e
-          wrapper.respond_with_error(e.message)
+          wrapper.respond_with_error(e)
         end
 
         # Processes the result of the handler execution.

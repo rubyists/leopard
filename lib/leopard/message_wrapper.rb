@@ -31,11 +31,11 @@ module Rubyists
         raw.respond(serialize(payload))
       end
 
-      # @param err [String, Exception] The error message or exception to respond with.
+      # @param err [Object] The error payload to respond with.
       #
       # @return [void]
-      def respond_with_error(err)
-        raw.respond_with_error(err.to_s)
+      def respond_with_error(err, &)
+        raw.respond_with_error(err, &)
       end
 
       private
