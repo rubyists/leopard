@@ -12,6 +12,7 @@ module Rubyists
       # @param middleware [#call] Callable returning the current middleware stack.
       # @param execute_handler [#call] Callable that executes the endpoint handler with the wrapped message.
       # @param logger [#error] Logger used for processing failures.
+      #
       # @return [void]
       def initialize(wrapper_factory:, middleware:, execute_handler:, logger:)
         @wrapper_factory = wrapper_factory
@@ -25,6 +26,7 @@ module Rubyists
       # @param raw_msg [Object] The raw transport message from NATS.
       # @param handler [Proc] The endpoint handler to execute.
       # @param callbacks [Hash{Symbol => #call}] Success, failure, and error callbacks for the transport.
+      #
       # @return [Object] The transport-specific callback result.
       def process(raw_msg, handler, callbacks)
         app(callbacks, handler).call(wrapper_factory.call(raw_msg))
@@ -36,6 +38,7 @@ module Rubyists
       #
       # @param callbacks [Hash{Symbol => #call}] Transport callbacks keyed by outcome.
       # @param handler [Proc] The endpoint handler to execute at the core of the stack.
+      #
       # @return [#call] The composed middleware application.
       def app(callbacks, handler)
         middleware.call.reverse_each.reduce(base_app(handler, callbacks)) do |current, (klass, args, blk)|
@@ -47,6 +50,7 @@ module Rubyists
       #
       # @param handler [Proc] The endpoint handler to execute.
       # @param callbacks [Hash{Symbol => #call}] Transport callbacks keyed by outcome.
+      #
       # @return [Proc] The terminal application for the middleware chain.
       def base_app(handler, callbacks)
         lambda do |wrapper|
@@ -63,6 +67,7 @@ module Rubyists
       # @param wrapper [MessageWrapper] The wrapped transport message.
       # @param result [Dry::Monads::Result] The handler result to route.
       # @param callbacks [Hash{Symbol => #call}] Transport callbacks keyed by outcome.
+      #
       # @return [Object] The callback return value for the routed result.
       # @raise [ResultError] If the handler returned a non-result object.
       def process_result(wrapper, result, callbacks)

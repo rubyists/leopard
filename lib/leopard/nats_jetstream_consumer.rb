@@ -11,8 +11,10 @@ module Rubyists
       PROTECTED_CONSUMER_KEYS = %i[durable_name filter_subject ack_policy].freeze
 
       # @!attribute [r] subscriptions
+      #
       #   @return [Array<Object>] Active JetStream pull subscriptions.
       # @!attribute [r] threads
+      #
       #   @return [Array<Thread>] Consumer loop threads for each endpoint.
       attr_reader :subscriptions, :threads
 
@@ -25,6 +27,7 @@ module Rubyists
       # @param dependencies [Hash{Symbol => Object}] Optional collaborators for callback and thread creation.
       # @option dependencies [Class] :callback_builder (NatsJetstreamCallbacks) Builder for transport callbacks.
       # @option dependencies [Class] :thread_factory (Thread) Thread-like factory used to spawn consumer loops.
+      #
       # @return [void]
       def initialize(jetstream:, endpoints:, logger:, process_message:, **dependencies)
         @jetstream = jetstream
@@ -40,6 +43,7 @@ module Rubyists
 
       # Starts one pull-consumer loop per configured endpoint.
       #
+      #
       # @return [void]
       def start
         @running = true
@@ -47,6 +51,7 @@ module Rubyists
       end
 
       # Stops all pull-consumer loops and waits for them to exit.
+      #
       #
       # @return [void]
       def stop
@@ -60,6 +65,7 @@ module Rubyists
       # Starts a consumer loop for one endpoint.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to consume.
+      #
       # @return [void]
       def start_endpoint(endpoint)
         subscription = build_subscription(endpoint)
@@ -70,6 +76,7 @@ module Rubyists
       # Ensures the durable consumer exists and creates a pull subscription for it.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to subscribe to.
+      #
       # @return [Object] The JetStream pull subscription.
       def build_subscription(endpoint)
         ensure_consumer(endpoint)
@@ -83,6 +90,7 @@ module Rubyists
       # Verifies that the durable consumer exists, creating it when missing.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to ensure.
+      #
       # @return [Object] Consumer metadata from `consumer_info` or `add_consumer`.
       def ensure_consumer(endpoint)
         @jetstream.consumer_info(endpoint.stream, endpoint.durable)
@@ -93,6 +101,7 @@ module Rubyists
       # Builds the JetStream consumer configuration for an endpoint.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to translate.
+      #
       # @return [Hash] Consumer configuration accepted by `add_consumer`.
       def consumer_config(endpoint)
         base = {
@@ -106,6 +115,7 @@ module Rubyists
       # Normalizes optional consumer overrides into a hash.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to inspect.
+      #
       # @return [Hash] Consumer overrides, or an empty hash when none were provided.
       def normalized_consumer_options(endpoint)
         return {} unless endpoint.consumer
@@ -117,6 +127,7 @@ module Rubyists
       # Removes Leopard-managed consumer keys from user overrides.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to inspect.
+      #
       # @return [Hash] Consumer overrides excluding protected keys required by Leopard.
       def safe_consumer_options(endpoint)
         normalized_consumer_options(endpoint).reject { |key, _value| PROTECTED_CONSUMER_KEYS.include?(key.to_sym) }
@@ -126,6 +137,7 @@ module Rubyists
       #
       # @param subscription [Object] Pull subscription for the endpoint.
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration being consumed.
+      #
       # @return [void]
       def consume_endpoint(subscription, endpoint)
         while @running
@@ -144,6 +156,7 @@ module Rubyists
       #
       # @param subscription [Object] Pull subscription for the endpoint.
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration being consumed.
+      #
       # @return [void]
       def consume_batch(subscription, endpoint)
         fetch_messages(subscription, endpoint).each do |raw_msg|
@@ -155,6 +168,7 @@ module Rubyists
       #
       # @param subscription [Object] Pull subscription for the endpoint.
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration being consumed.
+      #
       # @return [Array<Object>] Raw JetStream messages returned by the subscription.
       def fetch_messages(subscription, endpoint)
         subscription.fetch(endpoint.batch, timeout: endpoint.fetch_timeout)
@@ -164,6 +178,7 @@ module Rubyists
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint whose loop failed.
       # @param error [StandardError] The raised exception.
+      #
       # @return [void]
       def log_loop_error(endpoint, error)
         @logger.error "JetStream endpoint #{endpoint.name} loop error: ", error

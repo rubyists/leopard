@@ -7,12 +7,14 @@ module Rubyists
       # Builds a callback set for request/reply endpoint outcomes.
       #
       # @param logger [#error] Logger used for failure payloads.
+      #
       # @return [void]
       def initialize(logger:)
         @logger = logger
       end
 
       # Returns transport callbacks for request/reply endpoints.
+      #
       #
       # @return [Hash{Symbol => #call}] Outcome callbacks keyed by `:on_success`, `:on_failure`, and `:on_error`.
       def callbacks
@@ -29,6 +31,7 @@ module Rubyists
       #
       # @param wrapper [MessageWrapper] Wrapped request message.
       # @param result [Dry::Monads::Success] Successful handler result.
+      #
       # @return [void]
       def respond_with_success(wrapper, result)
         wrapper.respond(result.value!)
@@ -38,6 +41,7 @@ module Rubyists
       #
       # @param wrapper [MessageWrapper] Wrapped request message.
       # @param result [Dry::Monads::Failure] Failed handler result.
+      #
       # @return [void]
       def respond_with_failure(wrapper, result)
         log_failure(result.failure)
@@ -48,6 +52,7 @@ module Rubyists
       #
       # @param wrapper [MessageWrapper] Wrapped request message.
       # @param error [StandardError] The unhandled exception.
+      #
       # @return [void]
       def respond_with_error(wrapper, error)
         wrapper.respond_with_error(error)
@@ -56,6 +61,7 @@ module Rubyists
       # Logs the failure payload returned by a handler.
       #
       # @param failure [Object] The failure payload from the handler.
+      #
       # @return [void]
       def log_failure(failure)
         @logger.error 'Error processing message: ', failure

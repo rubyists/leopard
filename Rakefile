@@ -25,10 +25,12 @@ QUICK_TEST_FILES = Dir['test/*/**/*.rb'].reject { |file| file.start_with?('test/
 
 # Returns the local NATS JetStream health endpoint used by the CI helpers.
 #
+#
 # @return [URI::HTTP] The health endpoint URI.
 def nats_health_uri = URI('http://127.0.0.1:8222/healthz')
 
 # Reports whether the local NATS JetStream health endpoint is currently reachable.
+#
 #
 # @return [Boolean] `true` when the broker responds successfully, otherwise `false`.
 def nats_ready?
@@ -38,6 +40,7 @@ rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::ECONNRESET
 end
 
 # Waits for the local NATS JetStream broker to report healthy.
+#
 #
 # @return [void]
 # @raise [RuntimeError] If the broker does not become healthy within 30 seconds.
@@ -51,6 +54,7 @@ end
 
 # Detects the container runtime used to manage the local NATS broker.
 #
+#
 # @return [String] `podman` when available, otherwise `docker`.
 def container_runtime
   File.executable?('/usr/bin/podman') || system('command -v podman > /dev/null 2>&1', exception: false) ? 'podman' : 'docker'
@@ -58,12 +62,14 @@ end
 
 # Runs the non-integration test files directly for a fast local feedback loop.
 #
+#
 # @return [void]
 def run_quick_tests!
   sh "ruby -w -Ilib -Itest #{QUICK_TEST_FILES.shelljoin}"
 end
 
 # Verifies that the current YARD coverage is complete.
+#
 #
 # @return [void]
 # @raise [RuntimeError] If YARD reports anything less than 100% documentation coverage.

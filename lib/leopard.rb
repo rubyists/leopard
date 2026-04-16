@@ -12,6 +12,7 @@ class Pathname
   #
   # @param other [#to_s] The path fragment to append.
   #
+  #
   # @return [Pathname] The combined path.
   def /(other)
     join other.to_s

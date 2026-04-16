@@ -7,13 +7,16 @@ module Rubyists
     # Wraps a raw NATS message with parsed payload and convenience response helpers.
     class MessageWrapper
       # @!attribute [r] raw
+      #
       # @return [NATS::Message] The original NATS message.
       #
       # @!attribute [r] data
+      #
       # @return [Object] The parsed data from the NATS message.
       attr_reader :raw, :data
       #
       # @!attribute [w] headers
+      #
       # @return [Hash] The headers from the NATS message.
       attr_accessor :headers
 
@@ -26,6 +29,7 @@ module Rubyists
 
       # @param payload [Object] The payload to respond with.
       #
+      #
       # @return [void]
       def respond(payload)
         raw.header = headers unless headers.empty?
@@ -33,6 +37,7 @@ module Rubyists
       end
 
       # @param err [Object] The error payload to respond with.
+      #
       #
       # @return [void]
       def respond_with_error(err, &)
@@ -47,6 +52,7 @@ module Rubyists
       #
       # @param raw [String] The raw data from the NATS message.
       #
+      #
       # @return [Object] The parsed data, or the raw string if parsing fails.
       def parse_data(raw)
         JSON.parse(raw)
@@ -56,6 +62,7 @@ module Rubyists
 
       # Serializes the object to a JSON string if it is not already a string.
       # @param obj [Object] The object to serialize.
+      #
       #
       # @return [String] The serialized JSON string or the original string.
       def serialize(obj)

@@ -22,6 +22,7 @@ module Rubyists
       # Extends an including class with Leopard's DSL and worker lifecycle behavior.
       #
       # @param base [Class] The class including this module.
+      #
       # @return [void]
       def self.included(base)
         base.extend(ClassMethods)
@@ -41,17 +42,21 @@ module Rubyists
 
         # Returns the configured request/reply endpoints for the service class.
         #
+        #
         # @return [Array<Endpoint>] Declared request/reply endpoints.
         def endpoints = @endpoints ||= []
         # Returns the configured JetStream endpoints for the service class.
+        #
         #
         # @return [Array<NatsJetstreamEndpoint>] Declared JetStream pull-consumer endpoints.
         def jetstream_endpoints = @jetstream_endpoints ||= []
         # Returns the configured endpoint groups for the service class.
         #
+        #
         # @return [Hash{Symbol,String => Hash}] Declared group definitions.
         def groups = @groups ||= {}
         # Returns the configured middleware stack for the service class.
+        #
         #
         # @return [Array<Array>] Middleware declarations in registration order.
         def middleware = @middleware ||= []
@@ -66,6 +71,7 @@ module Rubyists
         # @yield [wrapper] Handles the wrapped request message.
         # @yieldparam wrapper [MessageWrapper] The wrapped inbound NATS message.
         # @yieldreturn [Dry::Monads::Result] The handler result.
+        #
         #
         # @return [void]
         def endpoint(name, subject: nil, queue: nil, group: nil, &handler)
@@ -88,6 +94,7 @@ module Rubyists
         # @yieldparam wrapper [MessageWrapper] The wrapped inbound JetStream message.
         # @yieldreturn [Dry::Monads::Result] The handler result.
         #
+        #
         # @return [void]
         def jetstream_endpoint(name, **options, &handler)
           jetstream_endpoints << build_jetstream_endpoint(name, options, handler)
@@ -99,6 +106,7 @@ module Rubyists
         # @param group [String, nil] The parent group this group belongs to. Defaults to nil.
         # @param queue [String, nil] The NATS queue group to use for this group. Defaults to nil.
         #
+        #
         # @return [void]
         def group(name, group: nil, queue: nil)
           groups[name] = { name:, parent: group, queue: }
@@ -109,6 +117,7 @@ module Rubyists
         # @param klass [Class] The middleware class to use.
         # @param args [Array] Optional arguments to pass to the middleware class.
         # @param block [Proc] Optional block to pass to the middleware class.
+        #
         #
         # @return [void]
         def use(klass, *args, &block)
@@ -122,6 +131,7 @@ module Rubyists
         # @param service_opts [Hash] Options for the NATS service.
         # @param instances [Integer] The number of instances to spawn. Defaults to 1.
         # @param blocking [Boolean] If false, does not block current thread after starting the server. Defaults to true.
+        #
         #
         # @return [Concurrent::FixedThreadPool, void] The worker pool for non-blocking runs, otherwise blocks forever.
         def run(nats_url:, service_opts:, instances: 1, blocking: true)
@@ -146,6 +156,7 @@ module Rubyists
         # @param workers [Array] The array to store worker instances.
         # @param blocking [Boolean] If false, does not block current thread after starting the server.
         #
+        #
         # @return [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
         # @raise [ArgumentError] If `instance_args` was provided but is not a hash.
         def spawn_instances(url, opts, count, workers, blocking)
@@ -167,6 +178,7 @@ module Rubyists
         # @param workers [Array] The array to store worker instances.
         # @param blocking [Boolean] If true, blocks the current thread until the worker is set up.
         #
+        #
         # @return [void]
         def build_worker(nats_url, service_opts, workers, blocking)
           worker = @instance_args ? new(**@instance_args) : new
@@ -181,6 +193,7 @@ module Rubyists
         #
         # @param workers [Array] The array of worker instances to stop.
         # @param pool [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
+        #
         #
         # @return [Proc] A lambda that performs the shutdown operations.
         def shutdown(workers, pool)
@@ -201,6 +214,7 @@ module Rubyists
         # @param workers [Array] The array of worker instances to stop on signal.
         # @param pool [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
         #
+        #
         # @return [void]
         def trap_signals(workers, pool)
           return if @trapped
@@ -218,6 +232,7 @@ module Rubyists
         # This is useful when the server is running in a blocking mode.
         # If the main thread is not blocked, this method does just exits.
         #
+        #
         # @return [void]
         def wake_main_thread_and_exit!
           Thread.main.wakeup
@@ -233,6 +248,7 @@ module Rubyists
         # @param name [String, Symbol] Endpoint name.
         # @param options [Hash] JetStream endpoint options.
         # @param handler [Proc] Endpoint handler block.
+        #
         # @return [NatsJetstreamEndpoint] The configured JetStream endpoint definition.
         def build_jetstream_endpoint(name, options, handler)
           NatsJetstreamEndpoint.new(
@@ -251,6 +267,7 @@ module Rubyists
       module WorkerLifecycle
         # Returns the logger configured for the NATS API server.
         #
+        #
         # @return [Object] The configured logger.
         def logger = self.class.logger
 
@@ -259,6 +276,7 @@ module Rubyists
         #
         # @param nats_url [String] The URL of the NATS server.
         # @param service_opts [Hash] Options for the NATS service.
+        #
         #
         # @return [void]
         def setup_worker(nats_url: 'nats://localhost:4222', service_opts: {})
@@ -274,6 +292,7 @@ module Rubyists
         # @see #setup_worker
         # @param nats_url [String] The URL of the NATS server.
         # @param service_opts [Hash] Options for the NATS service.
+        #
         # @return [void]
         def setup_worker!(nats_url: 'nats://localhost:4222', service_opts: {})
           setup_worker(nats_url:, service_opts:)
@@ -281,6 +300,7 @@ module Rubyists
         end
 
         # Stops the NATS API server worker.
+        #
         #
         # @return [void]
         def stop
@@ -296,6 +316,7 @@ module Rubyists
 
         # Captures the current thread for later wakeup during shutdown.
         #
+        #
         # @return [Thread] The current worker thread.
         def initialize_worker_state
           @thread = Thread.current
@@ -304,6 +325,7 @@ module Rubyists
         # Opens the NATS client connection for this worker.
         #
         # @param nats_url [String] The URL of the NATS server.
+        #
         # @return [Object] The connected NATS client.
         def connect_client(nats_url)
           @client = NATS.connect(nats_url)
@@ -312,6 +334,7 @@ module Rubyists
         # Registers the NATS service for this worker.
         #
         # @param service_opts [Hash] Options for the NATS service.
+        #
         # @return [Object] The created NATS service.
         def initialize_service(service_opts)
           @service = @client.services.add(build_service_opts(service_opts:))
@@ -320,6 +343,7 @@ module Rubyists
         # Starts the JetStream consumer coordinator when JetStream endpoints are present.
         #
         # @param endpoints [Array<NatsJetstreamEndpoint>] JetStream endpoints for this worker.
+        #
         # @return [void]
         def start_jetstream_consumer(endpoints)
           return if endpoints.empty?
@@ -336,12 +360,14 @@ module Rubyists
 
         # Stops the JetStream consumer coordinator if one was started.
         #
+        #
         # @return [void]
         def stop_jetstream
           @jetstream_consumer&.stop
         end
 
         # Stops the registered NATS service and closes the client connection.
+        #
         #
         # @return [void]
         def stop_service
@@ -351,6 +377,7 @@ module Rubyists
 
         # Wakes the worker thread if it is blocked.
         #
+        #
         # @return [Thread, nil] The awakened worker thread, if present.
         def wake_worker
           @thread&.wakeup
@@ -358,12 +385,14 @@ module Rubyists
 
         # Returns the JetStream consumer coordinator class for this worker.
         #
+        #
         # @return [Class] The JetStream consumer implementation class.
         def jetstream_consumer_class
           NatsJetstreamConsumer
         end
 
         # Returns the thread factory used for JetStream consumer loops.
+        #
         #
         # @return [Class] The thread factory class.
         def thread_factory
@@ -373,6 +402,7 @@ module Rubyists
         # Builds the service options for the NATS service.
         #
         # @param service_opts [Hash] Options for the NATS service.
+        #
         #
         # @return [Hash] The complete service options including name and version.
         def build_service_opts(service_opts:)
@@ -386,6 +416,7 @@ module Rubyists
         #
         # @param gps [Hash] The groups to add, where keys are group names and values are group definitions.
         #
+        #
         # @return [Hash] A map of group names to their created group objects.
         def add_groups(gps)
           created = {}
@@ -398,6 +429,7 @@ module Rubyists
         # @param defs [Hash] The group definitions, where keys are group names and values are group definitions.
         # @param cache [Hash] A cache to store already created groups.
         # @param name [String] The name of the group to build.
+        #
         #
         # @return [NATS::Group] The created group object.
         # @raise [ArgumentError] If the requested group was never defined.
@@ -416,6 +448,7 @@ module Rubyists
         # @param endpoints [Array<Hash>] The list of endpoints to add.
         # @param group_map [Hash] A map of group names to their created group objects.
         #
+        #
         # @return [void]
         # @raise [ArgumentError] If an endpoint references an undefined group.
         def add_endpoints(endpoints, group_map)
@@ -433,6 +466,7 @@ module Rubyists
       module MessageHandling
         # Returns the logger configured for the NATS API server.
         #
+        #
         # @return [Object] The configured logger.
         def logger = self.class.logger
 
@@ -443,6 +477,7 @@ module Rubyists
         # @param parent [NATS::Group] The parent group or service to add the endpoint to.
         # @param ept    [Endpoint]    The endpoint definition containing name, subject, queue, and handler.
         #               NOTE: Named ept because `endpoint` is a DSL method we expose, to avoid confusion.
+        #
         #
         # @return [void]
         def build_endpoint(parent, ept)
@@ -456,6 +491,7 @@ module Rubyists
         # @param raw_msg [Object] The raw NATS transport message.
         # @param handler [Proc] The endpoint handler block.
         # @param callbacks [Hash{Symbol => #call}] Transport callbacks keyed by outcome.
+        #
         # @return [Object] The transport-specific callback result.
         def process_transport_message(raw_msg, handler, callbacks)
           message_processor.process(raw_msg, handler, callbacks)
@@ -463,12 +499,14 @@ module Rubyists
 
         # Returns the callback helper for request/reply endpoints.
         #
+        #
         # @return [NatsRequestReplyCallbacks] The request/reply callback helper.
         def request_reply_callbacks
           @request_reply_callbacks ||= NatsRequestReplyCallbacks.new(logger:)
         end
 
         # Returns the memoized message processor for this worker instance.
+        #
         #
         # @return [MessageProcessor] The shared message processor.
         def message_processor
@@ -484,6 +522,7 @@ module Rubyists
         #
         # @param wrapper [MessageWrapper] The wrapped transport message.
         # @param handler [Proc] The endpoint handler block.
+        #
         # @return [Dry::Monads::Result] The handler result.
         def execute_handler(wrapper, handler)
           instance_exec(wrapper, &handler)
