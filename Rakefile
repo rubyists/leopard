@@ -89,7 +89,8 @@ namespace :nats do
 
   desc 'Stop the local NATS JetStream broker container'
   task :stop do
-    sh("#{container_runtime} rm -f #{ENV.fetch('NATS_NAME', 'leopard-nats')}", verbose: false)
+    name = ENV.fetch('NATS_NAME', 'leopard-nats')
+    sh(container_runtime, 'rm', '-f', name, verbose: false)
   rescue RuntimeError
     nil
   end
