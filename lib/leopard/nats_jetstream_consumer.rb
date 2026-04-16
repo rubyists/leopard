@@ -7,6 +7,9 @@ module Rubyists
   module Leopard
     # Coordinates JetStream pull subscriptions and dispatches fetched messages through Leopard.
     class NatsJetstreamConsumer
+      # Consumer configuration keys Leopard owns and will not allow endpoint overrides to replace.
+      PROTECTED_CONSUMER_KEYS = %i[durable_name filter_subject ack_policy].freeze
+
       # @!attribute [r] subscriptions
       #   @return [Array<Object>] Active JetStream pull subscriptions.
       # @!attribute [r] threads
@@ -97,7 +100,7 @@ module Rubyists
           filter_subject: endpoint.subject,
           ack_policy: 'explicit',
         }
-        base.merge(normalized_consumer_options(endpoint))
+        base.merge(safe_consumer_options(endpoint))
       end
 
       # Normalizes optional consumer overrides into a hash.
@@ -109,6 +112,14 @@ module Rubyists
         return endpoint.consumer.to_h if endpoint.consumer.respond_to?(:to_h)
 
         endpoint.consumer
+      end
+
+      # Removes Leopard-managed consumer keys from user overrides.
+      #
+      # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to inspect.
+      # @return [Hash] Consumer overrides excluding protected keys required by Leopard.
+      def safe_consumer_options(endpoint)
+        normalized_consumer_options(endpoint).reject { |key, _value| PROTECTED_CONSUMER_KEYS.include?(key.to_sym) }
       end
 
       # Repeatedly fetches and processes batches for one endpoint while the consumer is running.
