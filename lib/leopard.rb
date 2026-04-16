@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'dry/configurable'
+require 'dry/monads'
 require 'pathname'
 require 'semantic_logger'
 
