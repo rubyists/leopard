@@ -4,6 +4,8 @@ module Rubyists
   module Leopard
     # Composes middleware around Leopard handlers and routes their results to transport callbacks.
     class MessageProcessor
+      private attr_reader :execute_handler, :logger, :middleware, :wrapper_factory
+
       # Builds a reusable processor for request/reply and JetStream transports.
       #
       # @param wrapper_factory [#call] Callable that wraps a raw transport message in a {MessageWrapper}-compatible object.
@@ -25,7 +27,7 @@ module Rubyists
       # @param callbacks [Hash{Symbol => #call}] Success, failure, and error callbacks for the transport.
       # @return [Object] The transport-specific callback result.
       def process(raw_msg, handler, callbacks)
-        app(callbacks, handler).call(@wrapper_factory.call(raw_msg))
+        app(callbacks, handler).call(wrapper_factory.call(raw_msg))
       end
 
       private
@@ -36,7 +38,7 @@ module Rubyists
       # @param handler [Proc] The endpoint handler to execute at the core of the stack.
       # @return [#call] The composed middleware application.
       def app(callbacks, handler)
-        @middleware.call.reverse_each.reduce(base_app(handler, callbacks)) do |current, (klass, args, blk)|
+        middleware.call.reverse_each.reduce(base_app(handler, callbacks)) do |current, (klass, args, blk)|
           klass.new(current, *args, &blk)
         end
       end
@@ -48,10 +50,10 @@ module Rubyists
       # @return [Proc] The terminal application for the middleware chain.
       def base_app(handler, callbacks)
         lambda do |wrapper|
-          result = @execute_handler.call(wrapper, handler)
+          result = execute_handler.call(wrapper, handler)
           process_result(wrapper, result, callbacks)
         rescue StandardError => e
-          @logger.error 'Error processing message: ', e
+          logger.error 'Error processing message: ', e
           callbacks[:on_error].call(wrapper, e)
         end
       end
@@ -70,7 +72,7 @@ module Rubyists
         in Dry::Monads::Failure
           callbacks[:on_failure].call(wrapper, result)
         else
-          @logger.error('Unexpected result: ', result:)
+          logger.error('Unexpected result: ', result:)
           raise ResultError, "Unexpected Response from Handler, must respond with a Success or Failure monad: #{result}"
         end
       end
