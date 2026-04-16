@@ -15,7 +15,6 @@ module Rubyists
 
       # Returns transport callbacks for request/reply endpoints.
       #
-      #
       # @return [Hash{Symbol => #call}] Outcome callbacks keyed by `:on_success`, `:on_failure`, and `:on_error`.
       def callbacks
         {

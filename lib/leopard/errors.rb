@@ -6,7 +6,6 @@ module Rubyists
     class LeopardError < StandardError
       # Captures the original exception state while replacing the backtrace with the current call stack.
       #
-      #
       # @return [void]
       def initialize(...)
         super
@@ -14,7 +13,6 @@ module Rubyists
       end
 
       # Returns a Leopard-truncated backtrace.
-      #
       #
       # @return [Array<String>] Up to the first four backtrace entries, plus a truncation marker when applicable.
       def backtrace

@@ -43,7 +43,6 @@ module Rubyists
 
       # Starts one pull-consumer loop per configured endpoint.
       #
-      #
       # @return [void]
       def start
         @running = true
@@ -51,7 +50,6 @@ module Rubyists
       end
 
       # Stops all pull-consumer loops and waits for them to exit.
-      #
       #
       # @return [void]
       def stop

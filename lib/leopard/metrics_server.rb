@@ -130,7 +130,6 @@ module Rubyists
 
       # Returns the absolute path to the Prometheus metrics template.
       #
-      #
       # @return [String] The metrics template path.
       def metrics_template_path
         File.expand_path('templates/prometheus_metrics.erb', __dir__)
