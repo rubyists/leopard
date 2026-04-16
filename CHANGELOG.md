@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/rubyists/leopard/compare/v0.2.4...v0.2.5) (2026-04-16)
+
+
+### Features
+
+* add optional prometheus metrics endpoint with saturation metrics ([#42](https://github.com/rubyists/leopard/issues/42)) ([fcd767a](https://github.com/rubyists/leopard/commit/fcd767ab5438c92bf50800d50027b43b7d0f9f0e))
+
 ## [0.2.4](https://github.com/rubyists/leopard/compare/v0.2.3...v0.2.4) (2026-03-31)
 
 
