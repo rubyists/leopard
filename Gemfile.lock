@@ -47,6 +47,7 @@ GEM
       prism (~> 1.5)
     minitest-global_expectations (1.0.1)
       minitest (> 5)
+    minitest-mock (5.27.0)
     nats-pure (2.5.0)
       base64
       concurrent-ruby (~> 1.0)
@@ -131,6 +132,7 @@ DEPENDENCIES
   leopard!
   minitest
   minitest-global_expectations
+  minitest-mock
   pry
   rake
   reline

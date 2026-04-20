@@ -10,6 +10,7 @@ group :development, :test do
   gem 'irb'
   gem 'minitest'
   gem 'minitest-global_expectations'
+  gem 'minitest-mock'
   gem 'pry'
   gem 'rake'
   gem 'reline'
