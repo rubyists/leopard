@@ -13,7 +13,8 @@ if ENV.delete('COVERAGE')
 end
 
 require 'minitest/autorun'
-require 'minitest/mock'
+# minitest 6.x (Ruby 4.0+) includes mock in core; 5.x requires it separately
+require 'minitest/mock' unless defined?(Minitest::Mock)
 require_relative '../lib/leopard'
 
 # Suppress logs when running tests
