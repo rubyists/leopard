@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/rubyists/leopard/compare/v0.2.5...v0.2.6) (2026-04-21)
+
+
+### Features
+
+* add nats_jetstream_consumer to provide the feature requested in issue [#44](https://github.com/rubyists/leopard/issues/44) ([#45](https://github.com/rubyists/leopard/issues/45)) ([9372aa4](https://github.com/rubyists/leopard/commit/9372aa4ce59b130e7143905ce5e8065519778861))
+
 ## [0.2.5](https://github.com/rubyists/leopard/compare/v0.2.4...v0.2.5) (2026-04-16)
 
 
