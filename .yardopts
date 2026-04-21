@@ -1,0 +1,5 @@
+--readme Readme.adoc
+--protected
+--private
+--output-dir doc/yard
+lib/**/*.rb

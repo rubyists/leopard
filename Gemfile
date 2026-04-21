@@ -6,8 +6,11 @@ source 'https://rubygems.org'
 gemspec
 
 group :development, :test do
+  gem 'asciidoctor'
+  gem 'irb'
   gem 'minitest'
   gem 'minitest-global_expectations'
+  gem 'minitest-mock'
   gem 'pry'
   gem 'rake'
   gem 'reline'
@@ -16,4 +19,5 @@ group :development, :test do
   gem 'rubocop-performance'
   gem 'rubocop-rake'
   gem 'simplecov'
+  gem 'yard'
 end

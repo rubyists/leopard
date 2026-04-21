@@ -13,6 +13,7 @@ if ENV.delete('COVERAGE')
 end
 
 require 'minitest/autorun'
+require 'minitest/mock'
 require_relative '../lib/leopard'
 
 # Suppress logs when running tests
