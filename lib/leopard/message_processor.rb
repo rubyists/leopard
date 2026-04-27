@@ -56,9 +56,13 @@ module Rubyists
         lambda do |wrapper|
           result = execute_handler.call(wrapper, handler)
           process_result(wrapper, result, callbacks)
+          # TODO: document that middleware functions are expected to propagate result
+          # https://github.com/rubyists/leopard/issues/48
+          result
         rescue StandardError => e
           logger.error 'Error processing message: ', e
           callbacks[:on_error].call(wrapper, e)
+          Dry::Monads::Result::Failure.new(e)
         end
       end
 
