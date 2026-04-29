@@ -3,7 +3,7 @@
 module Rubyists
   module Leopard
     # x-release-please-start-version
-    VERSION = '0.2.6'
+    VERSION = '0.2.7'
     # x-release-please-end
   end
 end
