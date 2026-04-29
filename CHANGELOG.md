@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/rubyists/leopard/compare/v0.2.6...v0.2.7) (2026-04-29)
+
+
+### Features
+
+* surface handler results to middleware chain ([#47](https://github.com/rubyists/leopard/issues/47)) ([eb046f2](https://github.com/rubyists/leopard/commit/eb046f245cfd3c773167e24b5690308ebb67ff87))
+
 ## [0.2.6](https://github.com/rubyists/leopard/compare/v0.2.5...v0.2.6) (2026-04-21)
 
 
