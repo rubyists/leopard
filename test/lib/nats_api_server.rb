@@ -218,9 +218,19 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
   end
 
   describe 'prometheus metrics' do # rubocop:disable Metrics/BlockLength
-    let(:available_struct) { Struct.new(:zero?) { def available_permits = self } }
+    let(:semaphore_struct) { Struct.new(:available_permits) }
     let(:queue_struct) { Struct.new(:pending_size) { def size = pending_size } }
-    let(:handler_struct) { Struct.new(:concurrency_semaphore, :pending_queue) }
+    let(:handler_struct) do
+      Struct.new(:concurrency_semaphore, :pending_queue, :processing_concurrency) do
+        def instance_variable_get(name)
+          return processing_concurrency if name == :@processing_concurrency
+
+          super
+        end
+      end
+    end
+    let(:executor_struct) { Struct.new(:active_count, :max_length, :queue_length) }
+    let(:client_struct) { Struct.new(:subscription_executor) }
     let(:endpoint_struct) do
       Struct.new(:subject) do
         def initialize(subject, handler)
@@ -231,9 +241,10 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     end
     let(:service_struct) { Struct.new(:endpoints) }
     let(:worker_struct) do
-      Struct.new(:service) do
+      Struct.new(:service, :client) do
         def instance_variable_get(name)
           return service if name == :@service
+          return client if name == :@client
 
           super
         end
@@ -241,32 +252,56 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     end
     let(:expected_metrics) do
       <<~METRICS
-        # HELP leopard_subject_busy_instances Instances currently processing a message on this subject
-        # TYPE leopard_subject_busy_instances gauge
-        leopard_subject_busy_instances{subject="alpha"} 1
-        leopard_subject_busy_instances{subject="beta"} 0
+        # HELP leopard_subject_busy_slots Thread slots actively processing a message for this subject on this worker
+        # TYPE leopard_subject_busy_slots gauge
+        leopard_subject_busy_slots{subject="alpha",worker="0"} 1
+        leopard_subject_busy_slots{subject="beta",worker="0"} 0
+        leopard_subject_busy_slots{subject="alpha",worker="1"} 2
 
-        # HELP leopard_subject_total_instances Total Leopard instances in this process
-        # TYPE leopard_subject_total_instances gauge
-        leopard_subject_total_instances{subject="alpha"} 2
-        leopard_subject_total_instances{subject="beta"} 2
+        # HELP leopard_subject_capacity_slots Total thread slots allocated for this subject on this worker
+        # TYPE leopard_subject_capacity_slots gauge
+        leopard_subject_capacity_slots{subject="alpha",worker="0"} 2
+        leopard_subject_capacity_slots{subject="beta",worker="0"} 2
+        leopard_subject_capacity_slots{subject="alpha",worker="1"} 2
 
-        # HELP leopard_subject_pending_messages Messages pending processing across all instances
+        # HELP leopard_subject_pending_messages Messages waiting to acquire a processing slot for this subject on this worker
         # TYPE leopard_subject_pending_messages gauge
-        leopard_subject_pending_messages{subject="alpha"} 5
-        leopard_subject_pending_messages{subject="beta"} 1
+        leopard_subject_pending_messages{subject="alpha",worker="0"} 3
+        leopard_subject_pending_messages{subject="beta",worker="0"} 1
+        leopard_subject_pending_messages{subject="alpha",worker="1"} 2
+
+        # HELP leopard_executor_active_threads Approximate number of active threads in the subscription executor (concurrent-ruby active_count is approximate)
+        # TYPE leopard_executor_active_threads gauge
+        leopard_executor_active_threads{worker="0"} 5
+        leopard_executor_active_threads{worker="1"} 10
+
+        # HELP leopard_executor_max_threads Maximum threads in the subscription executor; queued_tasks goes positive when sum of capacity_slots across subjects exceeds this value
+        # TYPE leopard_executor_max_threads gauge
+        leopard_executor_max_threads{worker="0"} 24
+        leopard_executor_max_threads{worker="1"} 24
+
+        # HELP leopard_executor_queued_tasks Tasks holding a semaphore permit but waiting for a free executor thread; nonzero only when the executor pool is fully saturated
+        # TYPE leopard_executor_queued_tasks gauge
+        leopard_executor_queued_tasks{worker="0"} 0
+        leopard_executor_queued_tasks{worker="1"} 2
       METRICS
     end
 
     it 'renders prometheus metrics from the erb template' do
       workers = [
-        worker_struct.new(service_struct.new([
-          endpoint_struct.new('alpha', handler_struct.new(available_struct.new(true), queue_struct.new(3))),
-          endpoint_struct.new('beta', handler_struct.new(available_struct.new(false), queue_struct.new(1))),
-        ])),
-        worker_struct.new(service_struct.new([
-          endpoint_struct.new('alpha', handler_struct.new(available_struct.new(false), queue_struct.new(2))),
-        ])),
+        worker_struct.new(
+          service_struct.new([
+            endpoint_struct.new('alpha', handler_struct.new(semaphore_struct.new(1), queue_struct.new(3), 2)),
+            endpoint_struct.new('beta', handler_struct.new(semaphore_struct.new(2), queue_struct.new(1), 2)),
+          ]),
+          client_struct.new(executor_struct.new(5, 24, 0)),
+        ),
+        worker_struct.new(
+          service_struct.new([
+            endpoint_struct.new('alpha', handler_struct.new(semaphore_struct.new(0), queue_struct.new(2), 2)),
+          ]),
+          client_struct.new(executor_struct.new(10, 24, 2)),
+        ),
       ]
 
       assert_equal expected_metrics, @klass.send(:prometheus_metrics, workers)

@@ -1,17 +1,35 @@
-# HELP leopard_subject_busy_instances Instances currently processing a message on this subject
-# TYPE leopard_subject_busy_instances gauge
-<% subjects.each do |subject| -%>
-leopard_subject_busy_instances{subject="<%= subject %>"} <%= busy[subject] %>
+# HELP leopard_subject_busy_slots Thread slots actively processing a message for this subject on this worker
+# TYPE leopard_subject_busy_slots gauge
+<% subject_metrics.each do |m| -%>
+leopard_subject_busy_slots{subject="<%= m[:subject] %>",worker="<%= m[:worker] %>"} <%= m[:busy_slots] %>
 <% end -%>
 
-# HELP leopard_subject_total_instances Total Leopard instances in this process
-# TYPE leopard_subject_total_instances gauge
-<% subjects.each do |subject| -%>
-leopard_subject_total_instances{subject="<%= subject %>"} <%= total %>
+# HELP leopard_subject_capacity_slots Total thread slots allocated for this subject on this worker
+# TYPE leopard_subject_capacity_slots gauge
+<% subject_metrics.each do |m| -%>
+leopard_subject_capacity_slots{subject="<%= m[:subject] %>",worker="<%= m[:worker] %>"} <%= m[:capacity_slots] %>
 <% end -%>
 
-# HELP leopard_subject_pending_messages Messages pending processing across all instances
+# HELP leopard_subject_pending_messages Messages waiting to acquire a processing slot for this subject on this worker
 # TYPE leopard_subject_pending_messages gauge
-<% subjects.each do |subject| -%>
-leopard_subject_pending_messages{subject="<%= subject %>"} <%= pending[subject] %>
+<% subject_metrics.each do |m| -%>
+leopard_subject_pending_messages{subject="<%= m[:subject] %>",worker="<%= m[:worker] %>"} <%= m[:pending] %>
+<% end -%>
+
+# HELP leopard_executor_active_threads Approximate number of active threads in the subscription executor (concurrent-ruby active_count is approximate)
+# TYPE leopard_executor_active_threads gauge
+<% executors.each do |e| -%>
+leopard_executor_active_threads{worker="<%= e[:worker] %>"} <%= e[:executor].active_count %>
+<% end -%>
+
+# HELP leopard_executor_max_threads Maximum threads in the subscription executor; queued_tasks goes positive when sum of capacity_slots across subjects exceeds this value
+# TYPE leopard_executor_max_threads gauge
+<% executors.each do |e| -%>
+leopard_executor_max_threads{worker="<%= e[:worker] %>"} <%= e[:executor].max_length %>
+<% end -%>
+
+# HELP leopard_executor_queued_tasks Tasks holding a semaphore permit but waiting for a free executor thread; nonzero only when the executor pool is fully saturated
+# TYPE leopard_executor_queued_tasks gauge
+<% executors.each do |e| -%>
+leopard_executor_queued_tasks{worker="<%= e[:worker] %>"} <%= e[:executor].queue_length %>
 <% end -%>
