@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.8](https://github.com/rubyists/leopard/compare/v0.2.7...v0.2.8) (2026-05-19)
+
+
+### Features
+
+* improved leopard saturation metrics ([2303ef2](https://github.com/rubyists/leopard/commit/2303ef223b6b8150d728d827592744bbc75fc1a3))
+* improved leopard saturation metrics ([c143056](https://github.com/rubyists/leopard/commit/c143056683f694eba1704acb84139095887515f4))
+
 ## [0.2.7](https://github.com/rubyists/leopard/compare/v0.2.6...v0.2.7) (2026-04-29)
 
 
