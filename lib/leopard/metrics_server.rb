@@ -80,43 +80,60 @@ module Rubyists
         render_metrics_template(metrics)
       end
 
-      # Aggregates per-subject worker utilization metrics.
+      # Aggregates per-worker, per-subject saturation metrics and per-worker executor metrics.
       #
       # @param workers [Array<Object>] Active Leopard worker instances to observe.
       #
       # @return [Hash{Symbol => Object}] Metric hashes for the Prometheus template.
       def collect_prometheus_metrics(workers)
-        busy    = Hash.new(0)
-        pending = Hash.new(0)
-        workers.each { |w| accumulate_worker_metrics(w, busy, pending) }
-        {
-          busy:,
-          pending:,
-          subjects: (busy.keys | pending.keys).sort,
-          total: workers.size,
-        }
+        subject_metrics = []
+        executors       = []
+
+        workers.each_with_index do |w, i|
+          accumulate_worker_metrics(w, i, subject_metrics)
+          ex = w.instance_variable_get(:@client)&.subscription_executor
+          executors << { worker: i, executor: ex } if ex
+        end
+
+        { subject_metrics:, executors: }
       end
 
-      # Adds one worker's endpoint saturation metrics to the aggregate hashes.
+      # Appends one worker's per-subject slot metrics to the subject_metrics array.
       #
       # @param worker [Object] A Leopard worker instance.
-      # @param busy [Hash{String => Integer}] Subject-to-busy-worker counts.
-      # @param pending [Hash{String => Integer}] Subject-to-pending-message counts.
+      # @param worker_index [Integer] Position of this worker in the workers array.
+      # @param subject_metrics [Array<Hash>] Accumulator for per-worker-per-subject metric rows.
       #
       # @return [void]
-      def accumulate_worker_metrics(worker, busy, pending)
+      def accumulate_worker_metrics(worker, worker_index, subject_metrics)
         service = worker.instance_variable_get(:@service)
         return unless service
 
-        service.endpoints.each do |ep|
-          # TODO: use ep.handler once nats-pure.rb adds attr_reader :handler to NATS::Service::Endpoint
-          sub = ep.instance_variable_get(:@handler)
-          next unless sub
-
-          subj = ep.subject.to_s
-          busy[subj]    += sub.concurrency_semaphore.available_permits.zero? ? 1 : 0
-          pending[subj] += sub.pending_queue&.size.to_i
+        service.endpoints.each do |endpoint|
+          row = endpoint_subject_metrics(endpoint, worker_index)
+          subject_metrics << row if row
         end
+      end
+
+      # Builds a per-worker-per-subject metric row from a single endpoint, or nil if not yet active.
+      #
+      # @param endpoint [Object] A NATS service endpoint.
+      # @param worker_index [Integer] Position of the owning worker in the workers array.
+      #
+      # @return [Hash, nil]
+      def endpoint_subject_metrics(endpoint, worker_index)
+        # TODO: use endpoint.handler once nats-pure.rb adds attr_reader :handler to NATS::Service::Endpoint
+        sub = endpoint.instance_variable_get(:@handler)
+        return unless sub
+
+        concurrency = sub.instance_variable_get(:@processing_concurrency).to_i
+        {
+          worker: worker_index,
+          subject: endpoint.subject.to_s,
+          busy_slots: concurrency - sub.concurrency_semaphore.available_permits,
+          capacity_slots: concurrency,
+          pending: sub.pending_queue&.size.to_i,
+        }
       end
 
       # Renders the metrics ERB template with aggregated metric data.
