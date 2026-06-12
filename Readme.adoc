@@ -4,6 +4,7 @@ bougyman <me@bougyman.com>
 :conventional-commits: https://www.conventionalcommits.org/en/v1.0.0/[Conventional Commits]
 :dry-configurable: https://github.com/dry-rb/dry-configurable[Dry::Configurable]
 :dry-monads: https://github.com/dry-rb/dry-monads[Dry::Monads]
+:jetstream-consumer-config: https://docs.nats.io/nats-concepts/jetstream/consumers#configuration[Jetstream Consumer Configuration]
 
 Leopard is a small framework for building concurrent {service-api} workers.
 It uses `Concurrent::FixedThreadPool` to manage multiple workers in a single process and provides a
@@ -115,6 +116,13 @@ class EventConsumer
   end
 end
 ----
+
+Any configuration options available for JetStream consumers can be passed via snakeified keys
+in the `consumer` hash, with the exception of `durable_name`, `filter_subject` and `ack_policy`.
+`durable_name` and `filter_subject` are both derived from the endpoint, and `ack_policy` is always
+set to `explicit`.
+
+{jetstream-consumer-config}
 
 JetStream handlers receive the same `Rubyists::Leopard::MessageWrapper` as service endpoints.
 Leopard will:
