@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/rubyists/leopard/compare/v0.2.8...v0.2.9) (2026-07-23)
+
+
+### Bug Fixes
+
+* **deps:** remove upper bound from semantic_logger dependency ([#54](https://github.com/rubyists/leopard/issues/54)) ([0b9f154](https://github.com/rubyists/leopard/commit/0b9f154f1b2ec1961dbb176954551b6f9caf16f0))
+
 ## [0.2.8](https://github.com/rubyists/leopard/compare/v0.2.7...v0.2.8) (2026-05-19)
 
 
