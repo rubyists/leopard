@@ -2,6 +2,7 @@
 
 require_relative '../helper'
 require Rubyists::Leopard.libroot / 'leopard/nats_api_server'
+require Rubyists::Leopard.libroot / 'leopard/message_processor'
 
 describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLength
   before do
@@ -16,6 +17,8 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     cm  = mod::ClassMethods
     cm.const_set(:Success, mod::Success) unless cm.const_defined?(:Success)
     cm.const_set(:Failure, mod::Failure) unless cm.const_defined?(:Failure)
+    @logger = Object.new
+    @logger.define_singleton_method(:error) { |*| nil }
   end
 
   it 'registers an endpoint' do
@@ -43,6 +46,34 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     assert_equal 'bar', endpoint.subject
     assert_equal 'q', endpoint.queue
     assert_nil endpoint.group
+    assert_equal blk, endpoint.handler
+  end
+
+  it 'registers a jetstream endpoint with options' do
+    blk = proc {}
+    @klass.jetstream_endpoint(
+      :events,
+      stream: 'EVENTS',
+      subject: 'events.created',
+      durable: 'events-consumer',
+      consumer: { max_deliver: 5 },
+      batch: 10,
+      fetch_timeout: 2,
+      nak_delay: 1,
+      &blk
+    )
+
+    assert_equal 1, @klass.jetstream_endpoints.length
+    endpoint = @klass.jetstream_endpoints.first
+
+    assert_equal :events, endpoint.name
+    assert_equal 'EVENTS', endpoint.stream
+    assert_equal 'events.created', endpoint.subject
+    assert_equal 'events-consumer', endpoint.durable
+    assert_equal({ max_deliver: 5 }, endpoint.consumer)
+    assert_equal 10, endpoint.batch
+    assert_equal 2, endpoint.fetch_timeout
+    assert_equal 1, endpoint.nak_delay
     assert_equal blk, endpoint.handler
   end
 
@@ -104,81 +135,102 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
       wrapper.log << :handler
       Dry::Monads::Success(:ok)
     }
-    @instance.stub(:process_result, ->(_wrapper, _result) {}) do
-      Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
-        @instance.send(:dispatch_with_middleware, wrapper, handler)
-      end
-    end
+    processor = Rubyists::Leopard::MessageProcessor.new(
+      wrapper_factory: ->(*) { wrapper },
+      middleware: -> { @klass.middleware },
+      execute_handler: ->(message, block) { block.call(message) },
+      logger: @logger,
+    )
+    processor.process(raw, handler, on_success: ->(*_) {}, on_failure: ->(*_) {}, on_error: ->(*_) {})
 
     assert_equal %i[mw1 mw2 handler], order
   end
 
-  it 'handles a message and processes result' do
-    raw_msg = Object.new
-    wrapper = Object.new
+  it 'executes a handler and routes Success to the success callback' do
     result = Dry::Monads::Success(:ok)
-    received = nil
-    handler = proc { |w|
-      received = w
-      result
-    }
-    processed = nil
+    wrapper = Object.new
+    success = nil
+    processor = processor_for(wrapper:, result:)
 
-    # Create an instance of the class to test instance methods after middleware is added
-    @instance = @klass.new
+    processor.process(:raw, proc { |message| message }, callback_set(on_success: ->(message, value) { success = [message, value] }))
 
-    @instance.stub(:process_result, ->(w, r) { processed = [w, r] }) do
-      Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
-        @instance.send(:handle_message, raw_msg, handler)
-      end
-    end
-
-    assert_equal wrapper, received
-    assert_equal [wrapper, result], processed
+    assert_equal [wrapper, result], success
   end
 
-  it 'responds with error when handler raises' do
-    raw_msg = Object.new
+  it 'routes raised errors to the error callback' do
     err = nil
     wrapper = Object.new
-    wrapper.define_singleton_method(:respond_with_error) { |raised| err = raised }
-    Rubyists::Leopard::MessageWrapper.stub(:new, wrapper) do
-      @instance.send(:handle_message, raw_msg, proc { raise 'boom' })
-    end
+    processor = Rubyists::Leopard::MessageProcessor.new(
+      wrapper_factory: ->(*) { wrapper },
+      middleware: -> { [] },
+      execute_handler: ->(*) { raise 'boom' },
+      logger: @logger,
+    )
+    processor.process(:raw, proc {}, callback_set(on_error: ->(_message, raised) { err = raised }))
 
     assert_instance_of RuntimeError, err
     assert_equal 'boom', err.message
   end
 
-  it 'responds when processing Success result' do
+  it 'routes Success results unchanged to the success callback' do
     wrapper = Minitest::Mock.new
-    wrapper.expect(:respond, nil, ['ok'])
+    on_success = Minitest::Mock.new
     result = Rubyists::Leopard::NatsApiServer::Success.new('ok')
-    @instance.send(:process_result, wrapper, result)
-    wrapper.verify
+    on_success.expect(:call, nil, [wrapper, result])
+    processor_for(wrapper:, result:).process(:raw, proc { |message| message }, callback_set(on_success:, on_failure: ->(*_) {}))
+    on_success.verify
   end
 
-  it 'responds when processing Failure result' do
+  it 'routes Failure results unchanged to the failure callback' do
     wrapper = Minitest::Mock.new
-    wrapper.expect(:respond_with_error, nil, ['fail'])
+    on_failure = Minitest::Mock.new
     result = Rubyists::Leopard::NatsApiServer::Failure.new('fail')
-    @instance.send(:process_result, wrapper, result)
-    wrapper.verify
+    on_failure.expect(:call, nil, [wrapper, result])
+    processor_for(wrapper:, result:).process(:raw, proc { |message| message }, callback_set(on_success: ->(*_) {}, on_failure:))
+    on_failure.verify
   end
 
   it 'passes hash failures through unchanged' do
     err = { code: 422, description: 'invalid' }
-    wrapper = Minitest::Mock.new
-    wrapper.expect(:respond_with_error, nil, [err])
+    wrapper = Object.new
     result = Rubyists::Leopard::NatsApiServer::Failure.new(err)
-    @instance.send(:process_result, wrapper, result)
-    wrapper.verify
+    received = nil
+    processor_for(wrapper:, result:).process(
+      :raw,
+      proc { |message| message },
+      callback_set(on_success: ->(*_) {}, on_failure: ->(_wrapper, failure_result) { received = failure_result.failure }),
+    )
+
+    assert_equal err, received
+  end
+
+  def processor_for(wrapper:, result:)
+    Rubyists::Leopard::MessageProcessor.new(
+      wrapper_factory: ->(*) { wrapper },
+      middleware: -> { [] },
+      execute_handler: ->(*) { result },
+      logger: @logger,
+    )
+  end
+
+  def callback_set(on_success: ->(*_) {}, on_failure: ->(*_) {}, on_error: ->(*_) {})
+    { on_success:, on_failure:, on_error: }
   end
 
   describe 'prometheus metrics' do # rubocop:disable Metrics/BlockLength
-    let(:available_struct) { Struct.new(:zero?) { def available_permits = self } }
+    let(:semaphore_struct) { Struct.new(:available_permits) }
     let(:queue_struct) { Struct.new(:pending_size) { def size = pending_size } }
-    let(:handler_struct) { Struct.new(:concurrency_semaphore, :pending_queue) }
+    let(:handler_struct) do
+      Struct.new(:concurrency_semaphore, :pending_queue, :processing_concurrency) do
+        def instance_variable_get(name)
+          return processing_concurrency if name == :@processing_concurrency
+
+          super
+        end
+      end
+    end
+    let(:executor_struct) { Struct.new(:active_count, :max_length, :queue_length) }
+    let(:client_struct) { Struct.new(:subscription_executor) }
     let(:endpoint_struct) do
       Struct.new(:subject) do
         def initialize(subject, handler)
@@ -189,9 +241,10 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     end
     let(:service_struct) { Struct.new(:endpoints) }
     let(:worker_struct) do
-      Struct.new(:service) do
+      Struct.new(:service, :client) do
         def instance_variable_get(name)
           return service if name == :@service
+          return client if name == :@client
 
           super
         end
@@ -199,32 +252,56 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     end
     let(:expected_metrics) do
       <<~METRICS
-        # HELP leopard_subject_busy_instances Instances currently processing a message on this subject
-        # TYPE leopard_subject_busy_instances gauge
-        leopard_subject_busy_instances{subject="alpha"} 1
-        leopard_subject_busy_instances{subject="beta"} 0
+        # HELP leopard_subject_busy_slots Thread slots actively processing a message for this subject on this worker
+        # TYPE leopard_subject_busy_slots gauge
+        leopard_subject_busy_slots{subject="alpha",worker="0"} 1
+        leopard_subject_busy_slots{subject="beta",worker="0"} 0
+        leopard_subject_busy_slots{subject="alpha",worker="1"} 2
 
-        # HELP leopard_subject_total_instances Total Leopard instances in this process
-        # TYPE leopard_subject_total_instances gauge
-        leopard_subject_total_instances{subject="alpha"} 2
-        leopard_subject_total_instances{subject="beta"} 2
+        # HELP leopard_subject_capacity_slots Total thread slots allocated for this subject on this worker
+        # TYPE leopard_subject_capacity_slots gauge
+        leopard_subject_capacity_slots{subject="alpha",worker="0"} 2
+        leopard_subject_capacity_slots{subject="beta",worker="0"} 2
+        leopard_subject_capacity_slots{subject="alpha",worker="1"} 2
 
-        # HELP leopard_subject_pending_messages Messages pending processing across all instances
+        # HELP leopard_subject_pending_messages Messages waiting to acquire a processing slot for this subject on this worker
         # TYPE leopard_subject_pending_messages gauge
-        leopard_subject_pending_messages{subject="alpha"} 5
-        leopard_subject_pending_messages{subject="beta"} 1
+        leopard_subject_pending_messages{subject="alpha",worker="0"} 3
+        leopard_subject_pending_messages{subject="beta",worker="0"} 1
+        leopard_subject_pending_messages{subject="alpha",worker="1"} 2
+
+        # HELP leopard_executor_active_threads Approximate number of active threads in the subscription executor (concurrent-ruby active_count is approximate)
+        # TYPE leopard_executor_active_threads gauge
+        leopard_executor_active_threads{worker="0"} 5
+        leopard_executor_active_threads{worker="1"} 10
+
+        # HELP leopard_executor_max_threads Maximum threads in the subscription executor; queued_tasks goes positive when sum of capacity_slots across subjects exceeds this value
+        # TYPE leopard_executor_max_threads gauge
+        leopard_executor_max_threads{worker="0"} 24
+        leopard_executor_max_threads{worker="1"} 24
+
+        # HELP leopard_executor_queued_tasks Tasks holding a semaphore permit but waiting for a free executor thread; nonzero only when the executor pool is fully saturated
+        # TYPE leopard_executor_queued_tasks gauge
+        leopard_executor_queued_tasks{worker="0"} 0
+        leopard_executor_queued_tasks{worker="1"} 2
       METRICS
     end
 
     it 'renders prometheus metrics from the erb template' do
       workers = [
-        worker_struct.new(service_struct.new([
-          endpoint_struct.new('alpha', handler_struct.new(available_struct.new(true), queue_struct.new(3))),
-          endpoint_struct.new('beta', handler_struct.new(available_struct.new(false), queue_struct.new(1))),
-        ])),
-        worker_struct.new(service_struct.new([
-          endpoint_struct.new('alpha', handler_struct.new(available_struct.new(false), queue_struct.new(2))),
-        ])),
+        worker_struct.new(
+          service_struct.new([
+            endpoint_struct.new('alpha', handler_struct.new(semaphore_struct.new(1), queue_struct.new(3), 2)),
+            endpoint_struct.new('beta', handler_struct.new(semaphore_struct.new(2), queue_struct.new(1), 2)),
+          ]),
+          client_struct.new(executor_struct.new(5, 24, 0)),
+        ),
+        worker_struct.new(
+          service_struct.new([
+            endpoint_struct.new('alpha', handler_struct.new(semaphore_struct.new(0), queue_struct.new(2), 2)),
+          ]),
+          client_struct.new(executor_struct.new(10, 24, 2)),
+        ),
       ]
 
       assert_equal expected_metrics, @klass.send(:prometheus_metrics, workers)

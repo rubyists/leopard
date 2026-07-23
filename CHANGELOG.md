@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.2.9](https://github.com/rubyists/leopard/compare/v0.2.8...v0.2.9) (2026-07-23)
+
+
+### Bug Fixes
+
+* **deps:** remove upper bound from semantic_logger dependency ([#54](https://github.com/rubyists/leopard/issues/54)) ([0b9f154](https://github.com/rubyists/leopard/commit/0b9f154f1b2ec1961dbb176954551b6f9caf16f0))
+
+## [0.2.8](https://github.com/rubyists/leopard/compare/v0.2.7...v0.2.8) (2026-05-19)
+
+
+### Features
+
+* improved leopard saturation metrics ([2303ef2](https://github.com/rubyists/leopard/commit/2303ef223b6b8150d728d827592744bbc75fc1a3))
+* improved leopard saturation metrics ([c143056](https://github.com/rubyists/leopard/commit/c143056683f694eba1704acb84139095887515f4))
+
+## [0.2.7](https://github.com/rubyists/leopard/compare/v0.2.6...v0.2.7) (2026-04-29)
+
+
+### Features
+
+* surface handler results to middleware chain ([#47](https://github.com/rubyists/leopard/issues/47)) ([eb046f2](https://github.com/rubyists/leopard/commit/eb046f245cfd3c773167e24b5690308ebb67ff87))
+
+## [0.2.6](https://github.com/rubyists/leopard/compare/v0.2.5...v0.2.6) (2026-04-21)
+
+
+### Features
+
+* add nats_jetstream_consumer to provide the feature requested in issue [#44](https://github.com/rubyists/leopard/issues/44) ([#45](https://github.com/rubyists/leopard/issues/45)) ([9372aa4](https://github.com/rubyists/leopard/commit/9372aa4ce59b130e7143905ce5e8065519778861))
+
 ## [0.2.5](https://github.com/rubyists/leopard/compare/v0.2.4...v0.2.5) (2026-04-16)
 
 

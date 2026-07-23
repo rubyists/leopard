@@ -6,29 +6,55 @@ require 'dry/configurable'
 require 'concurrent'
 require_relative '../leopard'
 require_relative 'message_wrapper'
+require_relative 'message_processor'
 require_relative 'metrics_server'
+require_relative 'nats_jetstream_endpoint'
+require_relative 'nats_jetstream_consumer'
+require_relative 'nats_request_reply_callbacks'
 
 module Rubyists
   module Leopard
+    # DSL and runtime integration for Leopard request/reply and JetStream workers.
     module NatsApiServer
       include Dry::Monads[:result]
       extend Dry::Monads[:result]
 
+      # Extends an including class with Leopard's DSL and worker lifecycle behavior.
+      #
+      # @param base [Class] The class including this module.
+      #
+      # @return [void]
       def self.included(base)
         base.extend(ClassMethods)
-        base.include(InstanceMethods)
+        base.include(WorkerLifecycle)
+        base.include(MessageHandling)
         base.extend(Dry::Monads[:result])
         base.extend(Dry::Configurable)
         base.setting :logger, default: Rubyists::Leopard.logger, reader: true
       end
 
-      Endpoint = Struct.new(:name, :subject, :queue, :group, :handler)
+      # Configuration for a request/reply endpoint declared with {.endpoint}.
+      Endpoint = Struct.new(:name, :subject, :queue, :group, :handler, keyword_init: true)
 
+      # Class-level DSL for defining Leopard endpoints, middleware, and worker startup.
       module ClassMethods
         include MetricsServer
 
+        # Returns the configured request/reply endpoints for the service class.
+        #
+        # @return [Array<Endpoint>] Declared request/reply endpoints.
         def endpoints = @endpoints ||= []
+        # Returns the configured JetStream endpoints for the service class.
+        #
+        # @return [Array<NatsJetstreamEndpoint>] Declared JetStream pull-consumer endpoints.
+        def jetstream_endpoints = @jetstream_endpoints ||= []
+        # Returns the configured endpoint groups for the service class.
+        #
+        # @return [Hash{Symbol,String => Hash}] Declared group definitions.
         def groups = @groups ||= {}
+        # Returns the configured middleware stack for the service class.
+        #
+        # @return [Array<Array>] Middleware declarations in registration order.
         def middleware = @middleware ||= []
 
         # Define an endpoint for the NATS API server.
@@ -38,10 +64,34 @@ module Rubyists
         # @param queue [String, nil] The NATS queue group to use. Defaults to nil.
         # @param group [String, nil] The group this endpoint belongs to. Defaults to nil.
         # @param handler [Proc] The block that will handle incoming messages.
+        # @yield [wrapper] Handles the wrapped request message.
+        # @yieldparam wrapper [MessageWrapper] The wrapped inbound NATS message.
+        # @yieldreturn [Dry::Monads::Result] The handler result.
         #
         # @return [void]
         def endpoint(name, subject: nil, queue: nil, group: nil, &handler)
           endpoints << Endpoint.new(name:, subject: subject || name, queue:, group:, handler:)
+        end
+
+        # Define a JetStream pull consumer endpoint.
+        #
+        # @param name [String] The name of the endpoint.
+        # @param options [Hash] JetStream endpoint configuration.
+        # @option options [String] :stream The JetStream stream name.
+        # @option options [String] :subject The JetStream subject filter.
+        # @option options [String] :durable The durable consumer name.
+        # @option options [Hash, NATS::JetStream::API::ConsumerConfig, nil] :consumer Optional consumer config.
+        # @option options [Integer] :batch (1) Number of messages to fetch per pull request.
+        # @option options [Numeric] :fetch_timeout (5) Maximum time to wait for fetched messages.
+        # @option options [Numeric, nil] :nak_delay Optional delayed redelivery value for `nak`.
+        # @param handler [Proc] The block that will handle incoming messages.
+        # @yield [wrapper] Handles the wrapped JetStream message.
+        # @yieldparam wrapper [MessageWrapper] The wrapped inbound JetStream message.
+        # @yieldreturn [Dry::Monads::Result] The handler result.
+        #
+        # @return [void]
+        def jetstream_endpoint(name, **options, &handler)
+          jetstream_endpoints << build_jetstream_endpoint(name, options, handler)
         end
 
         # Define a group for organizing endpoints.
@@ -74,7 +124,7 @@ module Rubyists
         # @param instances [Integer] The number of instances to spawn. Defaults to 1.
         # @param blocking [Boolean] If false, does not block current thread after starting the server. Defaults to true.
         #
-        # @return [void]
+        # @return [Concurrent::FixedThreadPool, void] The worker pool for non-blocking runs, otherwise blocks forever.
         def run(nats_url:, service_opts:, instances: 1, blocking: true)
           logger.info 'Booting NATS API server...'
           workers = Concurrent::Array.new
@@ -98,6 +148,7 @@ module Rubyists
         # @param blocking [Boolean] If false, does not block current thread after starting the server.
         #
         # @return [Concurrent::FixedThreadPool] The thread pool managing the worker threads.
+        # @raise [ArgumentError] If `instance_args` was provided but is not a hash.
         def spawn_instances(url, opts, count, workers, blocking)
           pool = Concurrent::FixedThreadPool.new(count)
           @instance_args = opts.delete(:instance_args) || nil
@@ -177,49 +228,153 @@ module Rubyists
         rescue StandardError
           exit 1
         end
+
+        # Builds a JetStream endpoint struct with Leopard defaults applied.
+        #
+        # @param name [String, Symbol] Endpoint name.
+        # @param options [Hash] JetStream endpoint options.
+        # @param handler [Proc] Endpoint handler block.
+        #
+        # @return [NatsJetstreamEndpoint] The configured JetStream endpoint definition.
+        def build_jetstream_endpoint(name, options, handler)
+          NatsJetstreamEndpoint.new(
+            name:,
+            handler:,
+            consumer: nil,
+            batch: 1,
+            fetch_timeout: 5,
+            nak_delay: nil,
+            **options,
+          )
+        end
       end
 
-      module InstanceMethods
+      # Instance-side worker boot and shutdown helpers.
+      module WorkerLifecycle
         # Returns the logger configured for the NATS API server.
+        #
+        # @return [Object] The configured logger.
         def logger = self.class.logger
 
         # Sets up a worker thread for the NATS API server.
         # This method connects to the NATS server, adds the service, groups, and endpoints,
         #
-        # @param url [String] The URL of the NATS server.
-        # @param opts [Hash] Options for the NATS service.
-        # @param eps [Array<Hash>] The list of endpoints to add.
-        # @param gps [Hash] The groups to add.
+        # @param nats_url [String] The URL of the NATS server.
+        # @param service_opts [Hash] Options for the NATS service.
         #
         # @return [void]
         def setup_worker(nats_url: 'nats://localhost:4222', service_opts: {})
-          @thread  = Thread.current
-          @client  = NATS.connect nats_url
-          @service = @client.services.add(build_service_opts(service_opts:))
-          gps = self.class.groups.dup
-          eps = self.class.endpoints.dup
-          group_map = add_groups(gps)
-          add_endpoints eps, group_map
+          initialize_worker_state
+          connect_client(nats_url)
+          initialize_service(service_opts)
+          add_endpoints(self.class.endpoints.dup, add_groups(self.class.groups.dup))
+          start_jetstream_consumer(self.class.jetstream_endpoints.dup)
         end
 
         # Sets up a worker thread for the NATS API server and blocks the current thread.
         #
         # @see #setup_worker
+        # @param nats_url [String] The URL of the NATS server.
+        # @param service_opts [Hash] Options for the NATS service.
+        #
+        # @return [void]
         def setup_worker!(nats_url: 'nats://localhost:4222', service_opts: {})
           setup_worker(nats_url:, service_opts:)
           sleep
         end
 
         # Stops the NATS API server worker.
+        #
+        # @return [void]
         def stop
-          @service&.stop
-          @client&.close
-          @thread&.wakeup
+          @running = false
+          stop_jetstream
+          stop_service
+          wake_worker
         rescue ThreadError
           nil
         end
 
         private
+
+        # Captures the current thread for later wakeup during shutdown.
+        #
+        # @return [Thread] The current worker thread.
+        def initialize_worker_state
+          @thread = Thread.current
+        end
+
+        # Opens the NATS client connection for this worker.
+        #
+        # @param nats_url [String] The URL of the NATS server.
+        #
+        # @return [Object] The connected NATS client.
+        def connect_client(nats_url)
+          @client = NATS.connect(nats_url)
+        end
+
+        # Registers the NATS service for this worker.
+        #
+        # @param service_opts [Hash] Options for the NATS service.
+        #
+        # @return [Object] The created NATS service.
+        def initialize_service(service_opts)
+          @service = @client.services.add(build_service_opts(service_opts:))
+        end
+
+        # Starts the JetStream consumer coordinator when JetStream endpoints are present.
+        #
+        # @param endpoints [Array<NatsJetstreamEndpoint>] JetStream endpoints for this worker.
+        #
+        # @return [void]
+        def start_jetstream_consumer(endpoints)
+          return if endpoints.empty?
+
+          @jetstream_consumer = jetstream_consumer_class.new(
+            jetstream: @client.jetstream,
+            endpoints:,
+            logger:,
+            process_message: method(:process_transport_message),
+            thread_factory:,
+          )
+          @jetstream_consumer.start
+        end
+
+        # Stops the JetStream consumer coordinator if one was started.
+        #
+        # @return [void]
+        def stop_jetstream
+          @jetstream_consumer&.stop
+        end
+
+        # Stops the registered NATS service and closes the client connection.
+        #
+        # @return [void]
+        def stop_service
+          @service&.stop
+          @client&.close
+        end
+
+        # Wakes the worker thread if it is blocked.
+        #
+        # @return [Thread, nil] The awakened worker thread, if present.
+        def wake_worker
+          @thread&.wakeup
+        end
+
+        # Returns the JetStream consumer coordinator class for this worker.
+        #
+        # @return [Class] The JetStream consumer implementation class.
+        def jetstream_consumer_class
+          NatsJetstreamConsumer
+        end
+
+        # Returns the thread factory used for JetStream consumer loops.
+        #
+        # @return [Class] The thread factory class.
+        def thread_factory
+          Thread
+        end
 
         # Builds the service options for the NATS service.
         #
@@ -251,6 +406,7 @@ module Rubyists
         # @param name [String] The name of the group to build.
         #
         # @return [NATS::Group] The created group object.
+        # @raise [ArgumentError] If the requested group was never defined.
         def build_group(defs, cache, name)
           return cache[name] if cache.key?(name)
 
@@ -267,6 +423,7 @@ module Rubyists
         # @param group_map [Hash] A map of group names to their created group objects.
         #
         # @return [void]
+        # @raise [ArgumentError] If an endpoint references an undefined group.
         def add_endpoints(endpoints, group_map)
           endpoints.each do |ep|
             grp = ep.group
@@ -276,6 +433,16 @@ module Rubyists
             build_endpoint(parent, ep)
           end
         end
+      end
+
+      # Message execution helpers shared by request/reply and JetStream transports.
+      module MessageHandling
+        # Returns the logger configured for the NATS API server.
+        #
+        # @return [Object] The configured logger.
+        def logger = self.class.logger
+
+        private
 
         # Builds an endpoint in the NATS service.
         #
@@ -286,58 +453,48 @@ module Rubyists
         # @return [void]
         def build_endpoint(parent, ept)
           parent.endpoints.add(ept.name, subject: ept.subject, queue: ept.queue) do |raw_msg|
-            wrapper = MessageWrapper.new(raw_msg)
-            dispatch_with_middleware(wrapper, ept.handler)
+            process_transport_message(raw_msg, ept.handler, request_reply_callbacks.callbacks)
           end
         end
 
-        # Dispatches a message through the middleware stack and handles it with the provided handler.
+        # Processes a raw transport message through Leopard's middleware and callback pipeline.
         #
-        # @param wrapper [MessageWrapper] The message wrapper containing the raw message.
-        # @param handler [Proc] The handler to process the message.
+        # @param raw_msg [Object] The raw NATS transport message.
+        # @param handler [Proc] The endpoint handler block.
+        # @param callbacks [Hash{Symbol => #call}] Transport callbacks keyed by outcome.
         #
-        # @return [void]
-        def dispatch_with_middleware(wrapper, handler)
-          app = ->(w) { handle_message(w.raw, handler) }
-          self.class.middleware.reverse_each do |(klass, args, blk)|
-            app = klass.new(app, *args, &blk)
-          end
-          app.call(wrapper)
+        # @return [Object] The transport-specific callback result.
+        def process_transport_message(raw_msg, handler, callbacks)
+          message_processor.process(raw_msg, handler, callbacks)
         end
 
-        # Handles a raw NATS message using the provided handler.
+        # Returns the callback helper for request/reply endpoints.
         #
-        # @param raw_msg [NATS::Message] The raw NATS message to handle.
-        # @param handler [Proc] The handler to process the message.
-        #
-        # @return [void]
-        def handle_message(raw_msg, handler)
-          wrapper = MessageWrapper.new(raw_msg)
-          result  = instance_exec(wrapper, &handler)
-          process_result(wrapper, result)
-        rescue StandardError => e
-          logger.error 'Error processing message: ', e
-          wrapper.respond_with_error(e)
+        # @return [NatsRequestReplyCallbacks] The request/reply callback helper.
+        def request_reply_callbacks
+          @request_reply_callbacks ||= NatsRequestReplyCallbacks.new(logger:)
         end
 
-        # Processes the result of the handler execution.
+        # Returns the memoized message processor for this worker instance.
         #
-        # @param wrapper [MessageWrapper] The message wrapper containing the raw message.
-        # @param result [Dry::Monads::Result] The result of the handler execution.
+        # @return [MessageProcessor] The shared message processor.
+        def message_processor
+          @message_processor ||= MessageProcessor.new(
+            wrapper_factory: MessageWrapper.method(:new),
+            middleware: -> { self.class.middleware },
+            execute_handler: method(:execute_handler),
+            logger:,
+          )
+        end
+
+        # Executes an endpoint handler within the worker instance context.
         #
-        # @return [void]
-        # @raise [ResultError] If the result is not a Success or Failure monad.
-        def process_result(wrapper, result)
-          case result
-          in Dry::Monads::Success
-            wrapper.respond(result.value!)
-          in Dry::Monads::Failure
-            logger.error 'Error processing message: ', result.failure
-            wrapper.respond_with_error(result.failure)
-          else
-            logger.error('Unexpected result: ', result:)
-            raise ResultError, "Unexpected Response from Handler, must respond with a Success or Failure monad: #{result}"
-          end
+        # @param wrapper [MessageWrapper] The wrapped transport message.
+        # @param handler [Proc] The endpoint handler block.
+        #
+        # @return [Dry::Monads::Result] The handler result.
+        def execute_handler(wrapper, handler)
+          instance_exec(wrapper, &handler)
         end
       end
     end
