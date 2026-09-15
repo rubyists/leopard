@@ -36,10 +36,7 @@ class NatsRequestReplyCallbacksTest < Minitest::Test
     policy.expect(:call, nil, ['fail'])
     wrapper.expect(:respond_with_error, nil, ['fail'])
 
-    callbacks = Rubyists::Leopard::NatsRequestReplyCallbacks.new(
-      logger: @logger,
-      failure_log_policy: policy,
-    ).callbacks
+    callbacks = Rubyists::Leopard::NatsRequestReplyCallbacks.new(logger: @logger, failure_log_policy: policy).callbacks
     callbacks[:on_failure].call(wrapper, Dry::Monads::Result::Failure.new('fail'))
 
     policy.verify

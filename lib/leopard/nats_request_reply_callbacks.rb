@@ -12,7 +12,9 @@ module Rubyists
       #
       # @return [void]
       def initialize(logger:, failure_log_policy: nil)
-        @failure_log_policy = failure_log_policy || default_failure_log_policy(logger)
+        @failure_log_policy = failure_log_policy || lambda do |failure|
+          logger.error 'Error processing message: ', failure
+        end
       end
 
       # Returns transport callbacks for request/reply endpoints.
@@ -57,10 +59,6 @@ module Rubyists
       # @return [void]
       def respond_with_error(wrapper, error)
         wrapper.respond_with_error(error)
-      end
-
-      def default_failure_log_policy(logger)
-        ->(failure) { logger.error 'Error processing message: ', failure }
       end
     end
   end
