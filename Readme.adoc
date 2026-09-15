@@ -92,6 +92,24 @@ end
 EchoService.use LoggerMiddleware
 ----
 
+== Request/Reply Failure Logging
+
+Request/reply endpoints log failed handler results at error level by default.
+To change only that decision while keeping Leopard's existing callbacks and
+error responses, configure a policy that accepts the failure payload:
+
+[source,ruby]
+----
+EchoService.config.request_reply_failure_log_policy = lambda do |failure|
+  next if failure.status.between?(400, 499)
+
+  EchoService.logger.error 'Error processing message: ', failure
+end
+----
+
+The policy is called before Leopard responds with the failure payload. It must
+not change the response: every failure still uses `respond_with_error`.
+
 == JetStream Pull Consumers
 
 Leopard can also bind JetStream pull consumers through the same middleware and `Dry::Monads::Result`

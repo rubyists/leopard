@@ -204,6 +204,22 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
     assert_equal err, received
   end
 
+  it 'injects the configured failure log policy into request/reply callbacks' do
+    policy = Minitest::Mock.new
+    wrapper = Minitest::Mock.new
+    @klass.config.request_reply_failure_log_policy = policy
+    policy.expect(:call, nil, ['fail'])
+    wrapper.expect(:respond_with_error, nil, ['fail'])
+
+    @instance.send(:request_reply_callbacks).callbacks[:on_failure].call(
+      wrapper,
+      Rubyists::Leopard::NatsApiServer::Failure.new('fail'),
+    )
+
+    policy.verify
+    wrapper.verify
+  end
+
   def processor_for(wrapper:, result:)
     Rubyists::Leopard::MessageProcessor.new(
       wrapper_factory: ->(*) { wrapper },

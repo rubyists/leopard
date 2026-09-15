@@ -1,0 +1,52 @@
+= Enable Injectable Request/Reply Failure Logging
+
+== Goal
+
+Allow a service to change failure logging without replacing Leopard's
+request/reply callbacks. Applications can treat expected client failures, such
+as failures with particular statuses, differently from operational failures
+while preserving the existing response behavior.
+
+== Current behavior
+
+Every `Dry::Monads::Failure` is currently logged at error level before its
+payload is returned through `MessageWrapper#respond_with_error`. An application
+cannot change that logging policy without overriding Leopard internals.
+
+== Plan
+
+. Add a `:request_reply_failure_log_policy` service setting. When present, the
+  policy receives each failure payload before Leopard returns it to the client.
+. Keep `NatsRequestReplyCallbacks` as the callback owner. Its default policy
+  logs at error level, preserving current behavior when no policy is configured.
+. Pass the configured policy to `NatsRequestReplyCallbacks` when the worker
+  constructs its memoized callback helper.
+. Document that policies must leave `respond_with_error` behavior unchanged.
+
+== Suggested application policy
+
+Configure a policy directly. Leopard owns the callback mapping and invokes the
+policy only for failed handler results.
+
+[source,ruby]
+----
+MyService.config.request_reply_failure_log_policy = lambda do |failure|
+  next if failure.status.between?(400, 499)
+
+  MyService.logger.error 'Error processing message: ', failure
+end
+----
+
+Use the status accessor provided by the application's failure type (or another
+application-specific classifier). The policy must not change the response:
+Leopard still calls `wrapper.respond_with_error(failure)` for every failure.
+
+== Acceptance criteria
+
+* Existing request/reply services log and respond exactly as before without
+  configuration.
+* A service can configure failure logging without monkey-patching, inheriting
+  from, or replacing Leopard's callbacks.
+* A configured policy can select a log level, or no log entry, for any failure
+  status while returning the same error payload to the requester.
+* Successes and exceptions continue to follow their existing callback paths.

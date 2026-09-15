@@ -31,6 +31,7 @@ module Rubyists
         base.extend(Dry::Monads[:result])
         base.extend(Dry::Configurable)
         base.setting :logger, default: Rubyists::Leopard.logger, reader: true
+        base.setting :request_reply_failure_log_policy, default: nil, reader: true
       end
 
       # Configuration for a request/reply endpoint declared with {.endpoint}.
@@ -472,7 +473,10 @@ module Rubyists
         #
         # @return [NatsRequestReplyCallbacks] The request/reply callback helper.
         def request_reply_callbacks
-          @request_reply_callbacks ||= NatsRequestReplyCallbacks.new(logger:)
+          @request_reply_callbacks ||= NatsRequestReplyCallbacks.new(
+            logger:,
+            failure_log_policy: self.class.request_reply_failure_log_policy,
+          )
         end
 
         # Returns the memoized message processor for this worker instance.
