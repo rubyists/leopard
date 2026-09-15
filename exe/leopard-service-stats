@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+
+require 'leopard/nats_service_discovery/cli'
+
+cli = Rubyists::Leopard::NatsServiceDiscovery::CLI
+opts = cli.parse(
+  ARGV,
+  banner: 'Usage: leopard-service-stats [options]',
+  description: 'Prints service endpoint stats from $SRV.STATS responses.',
+  json: true,
+)
+
+cli.with_client(opts) do |client|
+  result = cli.operation_result!(
+    Rubyists::Leopard::NatsServiceDiscovery::Operation::Stats.call(**cli.discovery_options(opts, client)),
+  )
+
+  if opts[:json]
+    cli.print_json(result[:responses])
+  else
+    rows = result[:responses].flat_map do |service|
+      Array(service['endpoints']).map do |endpoint|
+        [
+          service['name'], service['id'], endpoint['subject'], endpoint['name'], endpoint['queue_group'],
+          endpoint['num_requests'], endpoint['num_errors'], endpoint['average_processing_time'], endpoint['last_error']
+        ]
+      end
+    end
+    cli.print_table(%w[SERVICE SERVICE_ID SUBJECT ENDPOINT QUEUE REQUESTS ERRORS AVG_NS LAST_ERROR], rows)
+  end
+end

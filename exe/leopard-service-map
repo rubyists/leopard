@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+
+require 'leopard/nats_service_discovery/cli'
+
+cli = Rubyists::Leopard::NatsServiceDiscovery::CLI
+opts = cli.parse(
+  ARGV,
+  banner: 'Usage: leopard-service-map [options]',
+  description: 'Builds a subject-to-endpoint map from $SRV.INFO responses.',
+  json: true,
+)
+
+cli.with_client(opts) do |client|
+  result = cli.operation_result!(
+    Rubyists::Leopard::NatsServiceDiscovery::Operation::SubjectMap.call(**cli.discovery_options(opts, client)),
+  )
+
+  if opts[:json]
+    cli.print_json(result[:subject_map])
+  else
+    rows = result[:subject_map].flat_map do |subject, listeners|
+      listeners.map { |listener| [subject, *listener.values_at('service', 'service_id', 'version', 'endpoint', 'queue_group')] }
+    end
+    cli.print_table(%w[SUBJECT SERVICE SERVICE_ID VERSION ENDPOINT QUEUE], rows)
+  end
+end

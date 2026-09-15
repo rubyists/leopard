@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+
+require 'leopard/nats_service_discovery/cli'
+
+cli = Rubyists::Leopard::NatsServiceDiscovery::CLI
+opts = cli.parse(
+  ARGV,
+  banner: 'Usage: leopard-services [options]',
+  description: 'Lists NATS Service API services and their endpoint counts.',
+  json: true,
+)
+
+cli.with_client(opts) do |client|
+  result = cli.operation_result!(
+    Rubyists::Leopard::NatsServiceDiscovery::Operation::Services.call(**cli.discovery_options(opts, client)),
+  )
+
+  if opts[:json]
+    cli.print_json(result[:services])
+  else
+    rows = result[:services].map { |service| service.values_at('name', 'id', 'version', 'endpoints') }
+    cli.print_table(%w[SERVICE ID VERSION ENDPOINTS], rows)
+  end
+end
