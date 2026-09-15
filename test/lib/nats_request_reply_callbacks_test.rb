@@ -30,6 +30,22 @@ class NatsRequestReplyCallbacksTest < Minitest::Test
     @logger.verify
   end
 
+  def test_failure_uses_injected_log_policy_and_responds_with_error
+    policy = Minitest::Mock.new
+    wrapper = Minitest::Mock.new
+    policy.expect(:call, nil, ['fail'])
+    wrapper.expect(:respond_with_error, nil, ['fail'])
+
+    callbacks = Rubyists::Leopard::NatsRequestReplyCallbacks.new(
+      logger: @logger,
+      failure_log_policy: policy,
+    ).callbacks
+    callbacks[:on_failure].call(wrapper, Dry::Monads::Result::Failure.new('fail'))
+
+    policy.verify
+    wrapper.verify
+  end
+
   def test_error_responds_with_error
     error = RuntimeError.new('boom')
     wrapper = Minitest::Mock.new

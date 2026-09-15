@@ -1,18 +1,13 @@
-= Enable Injectable Request/Reply Callbacks
+= Enable Injectable Request/Reply Failure Logging
 
 == Goal
 
-Allow a service to resolve its request/reply callback policy without changing
-Leopard internals. The resolved object is an ordinary collaborator, not a
-Leopard subclass. This lets applications treat expected client failures, such
+Allow a service to change failure logging without replacing Leopard's
+request/reply callbacks. Applications can treat expected client failures, such
 as failures with particular statuses, differently from operational failures
 while preserving the existing response behavior.
 
 == Current behavior
-
-`NatsApiServer::MessageHandling#request_reply_callbacks` constructs
-`NatsRequestReplyCallbacks.new(logger:)` directly. The callback class is
-therefore not configurable, despite being a separate collaborator.
 
 Every `Dry::Monads::Failure` is currently logged at error level before its
 payload is returned through `MessageWrapper#respond_with_error`. An application
@@ -20,92 +15,38 @@ cannot change that logging policy without overriding Leopard internals.
 
 == Plan
 
-. Add a small `RequestReplyCallbackResolution` module to the request/reply
-  message-handling path. It resolves the callback object through the service
-  configuration and memoizes the resolved object for the worker lifetime.
-. Add a `:request_reply_callback_resolver` setting when `NatsApiServer` is
-  included. Its default is a callable that builds
-  `NatsRequestReplyCallbacks.new(logger:)`, so existing services retain their
-  current behavior.
-. Change `MessageHandling#request_reply_callbacks` to call the configured
-  resolver, rather than naming or constructing `NatsRequestReplyCallbacks`
-  directly.
-. Document the resolver contract: it accepts `logger:` and returns any object
-  responding to `#callbacks`. The returned hash uses the existing
-  `:on_success`, `:on_failure`, and `:on_error` callbacks. No superclass,
-  mix-in, or Leopard-specific type is required.
-. Add a unit test proving the default resolver is used, and a focused
-  `NatsApiServer` test that configures a test resolver and verifies it receives
-  the service logger and supplies the callbacks passed to message processing.
-. Add tests for a composed callback object and a failure-logging policy object,
-  proving an application can replace logging without inheriting from or mixing
-  into a Leopard class.
-. Add a README example showing the composed callback object. It delegates its
-  logging decision to a policy object and leaves `respond_with_error` intact.
-  The policy receives the complete failure and may select behavior for any
-  application status or other failure classification. The example must make
-  the application's failure/status interface explicit rather than assume a
-  particular error type.
+. Add a `:request_reply_failure_log_policy` service setting. When present, the
+  policy receives each failure payload before Leopard returns it to the client.
+. Keep `NatsRequestReplyCallbacks` as the callback owner. Its default policy
+  logs at error level, preserving current behavior when no policy is configured.
+. Pass the configured policy to `NatsRequestReplyCallbacks` when the worker
+  constructs its memoized callback helper.
+. Document that policies must leave `respond_with_error` behavior unchanged.
 
 == Suggested application policy
 
-Implement the custom policy as a dependency of an application-owned callback
-object, not in middleware. Middleware wraps handler execution; callback code
-owns the mapping from handler outcomes to transport responses.
+Configure a policy directly. Leopard owns the callback mapping and invokes the
+policy only for failed handler results.
 
 [source,ruby]
 ----
-class FailureLogPolicy
-  def initialize(logger:, level_for:)
-    @logger = logger
-    @level_for = level_for
-  end
+MyService.config.request_reply_failure_log_policy = lambda do |failure|
+  next if failure.status.between?(400, 499)
 
-  def call(failure)
-    level = @level_for.call(failure)
-    @logger.public_send(level, 'Error processing message: ', failure) if level
-  end
-end
-
-class ApiCallbacks
-  def initialize(logger:, failure_log_policy:)
-    @failure_log_policy = failure_log_policy
-  end
-
-  def callbacks
-    {
-      on_success: ->(wrapper, result) { wrapper.respond(result.value!) },
-      on_failure: ->(wrapper, result) do
-        @failure_log_policy.call(result.failure)
-        wrapper.respond_with_error(result.failure)
-      end,
-      on_error: ->(wrapper, error) { wrapper.respond_with_error(error) },
-    }
-  end
-end
-
-MyService.config.request_reply_callback_resolver = lambda do |logger:|
-  level_for = ->(failure) { failure.status >= 500 ? :error : nil }
-  policy = FailureLogPolicy.new(logger:, level_for:)
-  ApiCallbacks.new(logger:, failure_log_policy: policy)
+  MyService.logger.error 'Error processing message: ', failure
 end
 ----
 
-The final implementation should use the application's real status accessor
-(or another application-specific classifier). It must still call
-`wrapper.respond_with_error(failure)` for every failure: changing alerting must
-not change the client response.
+Use the status accessor provided by the application's failure type (or another
+application-specific classifier). The policy must not change the response:
+Leopard still calls `wrapper.respond_with_error(failure)` for every failure.
 
 == Acceptance criteria
 
 * Existing request/reply services log and respond exactly as before without
   configuration.
-* A service can configure a callback resolver without monkey-patching,
-  inheriting from, or overriding a private Leopard method.
-* The resolver can return an application-owned callback object with composed
-  dependencies; it does not need to inherit from or mix in Leopard code.
-* A configured callback implementation can select a log level, or no log
-  entry, for any failure status while returning the same error payload to the
-  requester.
-* Exceptions continue to follow the existing error path unless the custom
-  callback policy deliberately changes them.
+* A service can configure failure logging without monkey-patching, inheriting
+  from, or replacing Leopard's callbacks.
+* A configured policy can select a log level, or no log entry, for any failure
+  status while returning the same error payload to the requester.
+* Successes and exceptions continue to follow their existing callback paths.

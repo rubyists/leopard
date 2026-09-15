@@ -6,11 +6,13 @@ module Rubyists
     class NatsRequestReplyCallbacks
       # Builds a callback set for request/reply endpoint outcomes.
       #
-      # @param logger [#error] Logger used for failure payloads.
+      # @param logger [#error] Logger used by the default failure log policy.
+      # @param failure_log_policy [#call, nil] Optional policy called with a
+      #   failure payload before it is returned to the requester.
       #
       # @return [void]
-      def initialize(logger:)
-        @logger = logger
+      def initialize(logger:, failure_log_policy: nil)
+        @failure_log_policy = failure_log_policy || default_failure_log_policy(logger)
       end
 
       # Returns transport callbacks for request/reply endpoints.
@@ -43,7 +45,7 @@ module Rubyists
       #
       # @return [void]
       def respond_with_failure(wrapper, result)
-        log_failure(result.failure)
+        @failure_log_policy.call(result.failure)
         wrapper.respond_with_error(result.failure)
       end
 
@@ -57,13 +59,8 @@ module Rubyists
         wrapper.respond_with_error(error)
       end
 
-      # Logs the failure payload returned by a handler.
-      #
-      # @param failure [Object] The failure payload from the handler.
-      #
-      # @return [void]
-      def log_failure(failure)
-        @logger.error 'Error processing message: ', failure
+      def default_failure_log_policy(logger)
+        ->(failure) { logger.error 'Error processing message: ', failure }
       end
     end
   end
