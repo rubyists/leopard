@@ -39,6 +39,7 @@ Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
   spec.add_dependency 'dry-monads', '~> 1.9'
   spec.add_dependency 'nats-pure', '~> 2.5'
   spec.add_dependency 'semantic_logger', '>= 4'
+  spec.add_dependency 'trailblazer-operation', '~> 0.11'
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

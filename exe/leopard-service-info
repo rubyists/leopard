@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+
+require 'leopard/nats_service_discovery/cli'
+
+cli = Rubyists::Leopard::NatsServiceDiscovery::CLI
+opts = cli.parse(
+  ARGV,
+  banner: 'Usage: leopard-service-info [options]',
+  description: 'Prints raw $SRV.INFO responses as JSON.',
+)
+
+cli.with_client(opts) do |client|
+  result = cli.operation_result!(
+    Rubyists::Leopard::NatsServiceDiscovery::Operation::Info.call(**cli.discovery_options(opts, client)),
+  )
+  cli.print_json(result[:responses])
+end
