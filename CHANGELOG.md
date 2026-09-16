@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/rubyists/leopard/compare/v0.2.9...v0.2.10) (2026-09-16)
+
+
+### Features
+
+* add NATS service discovery tools ([#58](https://github.com/rubyists/leopard/issues/58)) ([#59](https://github.com/rubyists/leopard/issues/59)) ([382d5e7](https://github.com/rubyists/leopard/commit/382d5e7e19367796145bec07e4bda686268905ae))
+
 ## [0.2.9](https://github.com/rubyists/leopard/compare/v0.2.8...v0.2.9) (2026-07-23)
 
 
