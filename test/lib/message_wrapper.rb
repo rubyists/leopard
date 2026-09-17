@@ -75,11 +75,11 @@ describe Rubyists::Leopard::MessageWrapper do # rubocop:disable Metrics/BlockLen
     assert_equal [err], msg.error_args
   end
 
-  it 'passes hash payloads through when responding with error' do
+  it 'serializes hash payloads when responding with error' do
     err = { 'description' => 'broken', 'code' => 422 }
     wrapper.respond_with_error(err)
 
-    assert_equal [err], msg.error_args
+    assert_equal ['{"description":"broken","code":422}'], msg.error_args
   end
 
   it 'forwards blocks when responding with error' do
