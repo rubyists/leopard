@@ -39,7 +39,7 @@ module Rubyists
       #
       # @return [void]
       def respond_with_error(err, &)
-        raw.respond_with_error(err.is_a?(Exception) ? err : serialize(err), &)
+        raw.respond_with_error(err, &)
       end
 
       private

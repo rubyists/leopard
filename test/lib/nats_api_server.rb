@@ -322,5 +322,22 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
 
       assert_equal expected_metrics, @klass.send(:prometheus_metrics, workers)
     end
+
+    it 'serializes hash metrics payloads before writing the response' do
+      client = Object.new
+      response = nil
+      client.define_singleton_method(:write) { |payload| response = payload }
+
+      @klass.stub(:prometheus_metrics, { error: 'boom' }) do
+        @klass.send(:write_metrics_response, client, 'GET /metrics HTTP/1.1', [])
+      end
+
+      expected_body = '{"error":"boom"}'
+      expected_response = "HTTP/1.1 200 OK\r\n" \
+                          "Content-Type: text/plain; version=0.0.4\r\n" \
+                          "Content-Length: #{expected_body.bytesize}\r\n\r\n#{expected_body}"
+
+      assert_equal expected_response, response
+    end
   end
 end

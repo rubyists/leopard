@@ -2,6 +2,7 @@
 
 require 'socket'
 require 'erb'
+require 'json'
 
 module Rubyists
   module Leopard
@@ -62,6 +63,7 @@ module Rubyists
       def write_metrics_response(client, request_line, workers)
         if request_line&.start_with?('GET /metrics')
           body = prometheus_metrics(workers)
+          body = body.is_a?(String) ? body : JSON.generate(body)
           client.write "HTTP/1.1 200 OK\r\n" \
                        "Content-Type: text/plain; version=0.0.4\r\n" \
                        "Content-Length: #{body.bytesize}\r\n\r\n#{body}"
