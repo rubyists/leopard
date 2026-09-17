@@ -334,7 +334,7 @@ describe 'Rubyists::Leopard::NatsApiServer' do # rubocop:disable Metrics/BlockLe
 
       expected_body = '{"error":"boom"}'
       expected_response = "HTTP/1.1 200 OK\r\n" \
-                          "Content-Type: text/plain; version=0.0.4\r\n" \
+                          "Content-Type: application/json\r\n" \
                           "Content-Length: #{expected_body.bytesize}\r\n\r\n#{expected_body}"
 
       assert_equal expected_response, response
