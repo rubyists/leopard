@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.3.0](https://github.com/rubyists/leopard/compare/v0.2.11...v0.3.0) (2026-09-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* Big move to use kwargs as the initializer for classes which include us ([#28](https://github.com/rubyists/leopard/issues/28))
+
+### Features
+
+* add NATS service discovery tools ([#58](https://github.com/rubyists/leopard/issues/58)) ([#59](https://github.com/rubyists/leopard/issues/59)) ([382d5e7](https://github.com/rubyists/leopard/commit/382d5e7e19367796145bec07e4bda686268905ae))
+* add nats_jetstream_consumer to provide the feature requested in issue [#44](https://github.com/rubyists/leopard/issues/44) ([#45](https://github.com/rubyists/leopard/issues/45)) ([9372aa4](https://github.com/rubyists/leopard/commit/9372aa4ce59b130e7143905ce5e8065519778861))
+* add optional prometheus metrics endpoint with saturation metrics ([#42](https://github.com/rubyists/leopard/issues/42)) ([fcd767a](https://github.com/rubyists/leopard/commit/fcd767ab5438c92bf50800d50027b43b7d0f9f0e))
+* Adds gemspec and gemfile ([#1](https://github.com/rubyists/leopard/issues/1)) ([972dc72](https://github.com/rubyists/leopard/commit/972dc72de804ca10db5cf869d0ea996a94ac9722))
+* Adds graceful shutdown when INT/TERM/QUIT signal is received ([#18](https://github.com/rubyists/leopard/issues/18)) ([ce03fb0](https://github.com/rubyists/leopard/commit/ce03fb00afcbbadadc413766b62df9451f7b73b8))
+* Adds rakefile back ([#3](https://github.com/rubyists/leopard/issues/3)) ([271592c](https://github.com/rubyists/leopard/commit/271592c357e07d58de085297850533eaae60a285))
+* Adds settings to module ([9ff0942](https://github.com/rubyists/leopard/commit/9ff0942dddd86bf4f97bc82626cc7bb35e4115ac))
+* Basic functionality for serving apis ([#4](https://github.com/rubyists/leopard/issues/4)) ([9ff0942](https://github.com/rubyists/leopard/commit/9ff0942dddd86bf4f97bc82626cc7bb35e4115ac))
+* improved leopard saturation metrics ([2303ef2](https://github.com/rubyists/leopard/commit/2303ef223b6b8150d728d827592744bbc75fc1a3))
+* improved leopard saturation metrics ([c143056](https://github.com/rubyists/leopard/commit/c143056683f694eba1704acb84139095887515f4))
+* Initial readme ([4ea9f34](https://github.com/rubyists/leopard/commit/4ea9f341c9df6096b8df3595ff6a075eb9b5c4f6))
+* serialize error payloads ([e87f709](https://github.com/rubyists/leopard/commit/e87f709949baef3fdb001605e2ecce10b1fa3b02))
+* serialize error payloads ([7fdc19f](https://github.com/rubyists/leopard/commit/7fdc19f0419756f21765a9ccb280701a1b9700df))
+* surface handler results to middleware chain ([#47](https://github.com/rubyists/leopard/issues/47)) ([eb046f2](https://github.com/rubyists/leopard/commit/eb046f245cfd3c773167e24b5690308ebb67ff87))
+
+
+### Bug Fixes
+
+* [#35](https://github.com/rubyists/leopard/issues/35) - Limits the backtrace to 4 lines in our exceptions ([#36](https://github.com/rubyists/leopard/issues/36)) ([df0fee8](https://github.com/rubyists/leopard/commit/df0fee8373fc0088cd61abcc3e6d963e957730b6))
+* Allow non blocking all the way down to the instance level ([#27](https://github.com/rubyists/leopard/issues/27)) ([01748a5](https://github.com/rubyists/leopard/commit/01748a56bc927ee1dbc70d2351fd12037e5b4bef))
+* Big move to use kwargs as the initializer for classes which include us ([#28](https://github.com/rubyists/leopard/issues/28)) ([72293b4](https://github.com/rubyists/leopard/commit/72293b434998679fe3ff2d467a6a39c11a325b5a))
+* content type calculation ([0af4b0b](https://github.com/rubyists/leopard/commit/0af4b0ba3c322ad734730f45eac925a73a760c73))
+* Corrects gemname in publish-gem.sh ([9ff0942](https://github.com/rubyists/leopard/commit/9ff0942dddd86bf4f97bc82626cc7bb35e4115ac))
+* Corrects the version ([#7](https://github.com/rubyists/leopard/issues/7)) ([a3de532](https://github.com/rubyists/leopard/commit/a3de5320a8c54e9ca6724b6e90812bb5b1b7d150))
+* **deps:** remove upper bound from semantic_logger dependency ([#54](https://github.com/rubyists/leopard/issues/54)) ([0b9f154](https://github.com/rubyists/leopard/commit/0b9f154f1b2ec1961dbb176954551b6f9caf16f0))
+* Do not leak SemanticLogger settings outside of isolation ([#30](https://github.com/rubyists/leopard/issues/30)) ([524595c](https://github.com/rubyists/leopard/commit/524595c37f114ec28f40abc841ecb3c7b6579f5a))
+* Ensure we exit after saying Bye Bye ([#33](https://github.com/rubyists/leopard/issues/33)) ([11a7584](https://github.com/rubyists/leopard/commit/11a7584dd88e7c7fb4dbfde613b8186dc4253892))
+* Fixes the gem publisher, and adds missing .version.txt ([#11](https://github.com/rubyists/leopard/issues/11)) ([3dcbd3c](https://github.com/rubyists/leopard/commit/3dcbd3c1d687e04ce5fde85fef5c2d1c10a8a4cc))
+* Have to build the gem before we can find it, doh ([#13](https://github.com/rubyists/leopard/issues/13)) ([62053e9](https://github.com/rubyists/leopard/commit/62053e9d2332d37d4d5697035a35adc71833eccd))
+* only serialize for metrics ([b7c81a6](https://github.com/rubyists/leopard/commit/b7c81a6dd44c326aec57c4e32971e87b4ca75eab))
+* preserve respond_with_error payloads ([#40](https://github.com/rubyists/leopard/issues/40)) ([f5c0d46](https://github.com/rubyists/leopard/commit/f5c0d463ec85556c731da1251897f27f2816310b))
+* Remove sequel cruft in ci config ([#9](https://github.com/rubyists/leopard/issues/9)) ([09a43e2](https://github.com/rubyists/leopard/commit/09a43e23c309167c56095dd608af9d79ff4f9b19))
+* Run in blocking mode, not just non-blocking ([#15](https://github.com/rubyists/leopard/issues/15)) ([a659145](https://github.com/rubyists/leopard/commit/a659145d8a04efe3b3932b99ab4c11ef0ba2025e))
+* set metrics JSON content type ([24196d1](https://github.com/rubyists/leopard/commit/24196d1307dab4153beb1c4142c7cf5ca786d336))
+* Stop sending code argument to respond_with_error, it does not accept it ([#23](https://github.com/rubyists/leopard/issues/23)) ([9d87b8c](https://github.com/rubyists/leopard/commit/9d87b8c308a1fdff72769863711bb6bb942b3677))
+
 ## [0.2.10](https://github.com/rubyists/leopard/compare/v0.2.9...v0.2.10) (2026-09-16)
 
 
