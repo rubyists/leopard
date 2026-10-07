@@ -85,7 +85,7 @@ module Rubyists
       def build_subscription(endpoint)
         @jetstream.pull_subscribe(
           endpoint.subject,
-          endpoint.durable,
+          endpoint.durable || endpoint.name,
           config: consumer_config(endpoint),
         )
       end
