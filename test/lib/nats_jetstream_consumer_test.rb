@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require_relative '../helper'
+require 'nats/client'
 require Rubyists::Leopard.libroot / 'leopard/nats_jetstream_consumer'
 require Rubyists::Leopard.libroot / 'leopard/nats_jetstream_endpoint'
-
 class NatsJetstreamConsumerTest < Minitest::Test
   def setup
     @consumer = Rubyists::Leopard::NatsJetstreamConsumer.new(
@@ -41,7 +41,48 @@ class NatsJetstreamConsumerTest < Minitest::Test
     assert_equal 100, string_key_config['max_ack_pending']
   end
 
+  def test_stream_for_with_the_configured_stream
+    assert_equal 'EVENTS', consumer_with(jetstream: Object.new).send(:stream_for, endpoint_with_consumer(nil))
+  end
+
+  def test_stream_for_with_the_subject_when_no_stream_is_configured
+    jetstream = Object.new
+    jetstream.define_singleton_method(:find_stream_name_by_subject) { |_subject| 'EVENTS' }
+
+    assert_equal 'EVENTS', consumer_with(jetstream:).send(:stream_for, endpoint_without_stream)
+  end
+
+  def test_stream_for_raises_a_configuration_error_when_no_stream_has_the_subject
+    jetstream = Object.new
+    jetstream.define_singleton_method(:find_stream_name_by_subject) { |_subject| raise NATS::JetStream::Error::NotFound }
+
+    assert_raises(Rubyists::Leopard::ConfigurationError) do
+      consumer_with(jetstream:).send(:stream_for, endpoint_without_stream)
+    end
+  end
+
+  def test_start_endpoint_logs_and_reraises_when_the_endpoint_fails_to_start
+    logged = []
+    logger = Object.new
+    logger.define_singleton_method(:error) { |*args| logged << args }
+
+    assert_raises(NoMethodError) do
+      consumer_with(jetstream: Object.new, logger:).send(:start_endpoint,
+        endpoint_with_consumer(nil))
+    end
+    assert_match(/failed to start/, logged.first.first)
+  end
+
   private
+
+  def consumer_with(jetstream:, logger: Object.new)
+    Rubyists::Leopard::NatsJetstreamConsumer.new(jetstream:, endpoints: [],
+      logger:, process_message: ->(*_) {})
+  end
+
+  def endpoint_without_stream
+    Rubyists::Leopard::NatsJetstreamEndpoint.new(**base_endpoint_attributes, stream: nil)
+  end
 
   def symbol_key_config
     @symbol_key_config ||= @consumer.send(:consumer_config, endpoint_with_consumer(symbol_key_overrides))

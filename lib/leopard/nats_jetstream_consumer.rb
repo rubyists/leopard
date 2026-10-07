@@ -69,6 +69,9 @@ module Rubyists
         subscription = build_subscription(endpoint)
         subscriptions << subscription
         threads << @thread_factory.new { consume_endpoint(subscription, endpoint) }
+      rescue StandardError => e
+        @logger.error "JetStream endpoint #{endpoint.name} failed to start: ", e
+        raise
       end
 
       # Ensures the durable consumer exists and creates a pull subscription for it.
@@ -77,12 +80,29 @@ module Rubyists
       #
       # @return [Object] The JetStream pull subscription.
       def build_subscription(endpoint)
-        ensure_consumer(endpoint)
+        stream = stream_for(endpoint)
+        ensure_consumer(endpoint, stream)
         @jetstream.pull_subscribe(
           endpoint.subject,
           endpoint.durable,
-          stream: endpoint.stream,
+          stream:,
         )
+      end
+
+      # Finds the stream for an endpoint, looking it up from the subject when none is configured.
+      #
+      # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to find a stream for.
+      #
+      # @raise [ConfigurationError] When no stream is configured and none captures the endpoint's subject.
+      #
+      # @return [String] The JetStream stream name.
+      def stream_for(endpoint)
+        endpoint.stream || @jetstream.find_stream_name_by_subject(endpoint.subject)
+      rescue NATS::JetStream::Error::NotFound
+        raise ConfigurationError,
+          "JetStream endpoint #{endpoint.name} has no stream and none captures subject
+          #{endpoint.subject}, " \
+          'create the stream or set `stream:`'
       end
 
       # Verifies that the durable consumer exists, creating it when missing.
@@ -90,10 +110,10 @@ module Rubyists
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to ensure.
       #
       # @return [Object] Consumer metadata from `consumer_info` or `add_consumer`.
-      def ensure_consumer(endpoint)
-        @jetstream.consumer_info(endpoint.stream, endpoint.durable)
+      def ensure_consumer(endpoint, stream)
+        @jetstream.consumer_info(stream, endpoint.durable)
       rescue NATS::JetStream::Error::NotFound
-        @jetstream.add_consumer(endpoint.stream, consumer_config(endpoint))
+        @jetstream.add_consumer(stream, consumer_config(endpoint))
       end
 
       # Builds the JetStream consumer configuration for an endpoint.
