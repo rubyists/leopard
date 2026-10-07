@@ -3,6 +3,7 @@
 require_relative '../helper'
 require Rubyists::Leopard.libroot / 'leopard/nats_jetstream_consumer'
 require Rubyists::Leopard.libroot / 'leopard/nats_jetstream_endpoint'
+
 class NatsJetstreamConsumerTest < Minitest::Test
   def setup
     @consumer = Rubyists::Leopard::NatsJetstreamConsumer.new(
