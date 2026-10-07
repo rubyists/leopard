@@ -74,7 +74,10 @@ module Rubyists
         raise
       end
 
-      # Ensures the durable consumer exists and creates a pull subscription for it.
+      # Creates a pull subscription for the endpoint's durable consumer.
+      #
+      # No stream is passed, so nats-pure resolves the stream from the subject and adds the durable consumer
+      # (using {#consumer_config}) when it does not already exist.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to subscribe to.
       #
@@ -83,7 +86,7 @@ module Rubyists
         @jetstream.pull_subscribe(
           endpoint.subject,
           endpoint.durable,
-          stream: endpoint.stream,
+          config: consumer_config(endpoint),
         )
       end
 
