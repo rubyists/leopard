@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/rubyists/leopard/compare/v0.3.0...v0.3.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* Add empty line ([aedb08d](https://github.com/rubyists/leopard/commit/aedb08d7760beea26cd237c646a0860b04c25a68))
+* enable jetstream endpoint to resolve stream from subject and add error logs ([1cdeaf6](https://github.com/rubyists/leopard/commit/1cdeaf699c15f6fffdd5de70cdf243325c5a0431))
+* Enable jetstream endpoint to resolve stream from subject and add error logs ([923dda5](https://github.com/rubyists/leopard/commit/923dda50850698d4bc2f358c49ade4f15d0d104b))
+* Pass endpoint name when durable is not available ([06e88c7](https://github.com/rubyists/leopard/commit/06e88c7a520c0f6dfec0f88110a039bea9b4c56f))
+* Remove ensure_consumer and fallback on pull_subscrbe to resolve stream ([909230c](https://github.com/rubyists/leopard/commit/909230ca55b85b42fda3703aa06cb00e4726b089))
+* Update integration test to reflect reliance on pull_subscribe ([b39fe75](https://github.com/rubyists/leopard/commit/b39fe75c9142dbdb2358e01d5ba6d96ec777c938))
+
 ## [0.3.0](https://github.com/rubyists/leopard/compare/v0.2.11...v0.3.0) (2026-09-18)
 
 
