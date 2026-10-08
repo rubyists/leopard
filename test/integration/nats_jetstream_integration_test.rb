@@ -43,7 +43,7 @@ module NatsJetstreamBrokerHelpers
     token = SecureRandom.hex(4)
     {
       stream: "EVENTS_#{token}",
-      subject: "events.#{token}",
+      subject: "leopard_it.events.#{token}",
       durable: "events_consumer_#{token}",
       service: "JetstreamService#{token}",
     }
@@ -101,6 +101,8 @@ module NatsJetstreamServiceHelpers
     worker
   end
 
+  # Only the stream is created here. Leopard calls pull_subscribe without a stream, so nats-pure resolves the
+  # stream from the subject and adds the durable consumer when it does not exist.
   def create_stream(names)
     @jetstream.add_stream(name: names[:stream], subjects: [names[:subject]])
     @streams << names[:stream]
@@ -121,7 +123,6 @@ module NatsJetstreamServiceHelpers
 
   def endpoint_options(names)
     {
-      stream: names[:stream],
       subject: names[:subject],
       durable: names[:durable],
       consumer: { ack_wait: 1, max_deliver: 5 },

@@ -41,7 +41,24 @@ class NatsJetstreamConsumerTest < Minitest::Test
     assert_equal 100, string_key_config['max_ack_pending']
   end
 
+  def test_start_endpoint_logs_and_reraises_when_the_endpoint_fails_to_start
+    logged = []
+    logger = Object.new
+    logger.define_singleton_method(:error) { |*args| logged << args }
+
+    assert_raises(NoMethodError) do
+      consumer_with(jetstream: Object.new, logger:).send(:start_endpoint,
+        endpoint_with_consumer(nil))
+    end
+    assert_match(/failed to start/, logged.first.first)
+  end
+
   private
+
+  def consumer_with(jetstream:, logger: Object.new)
+    Rubyists::Leopard::NatsJetstreamConsumer.new(jetstream:, endpoints: [],
+      logger:, process_message: ->(*_) {})
+  end
 
   def symbol_key_config
     @symbol_key_config ||= @consumer.send(:consumer_config, endpoint_with_consumer(symbol_key_overrides))

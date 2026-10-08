@@ -69,31 +69,25 @@ module Rubyists
         subscription = build_subscription(endpoint)
         subscriptions << subscription
         threads << @thread_factory.new { consume_endpoint(subscription, endpoint) }
+      rescue StandardError => e
+        @logger.error "JetStream endpoint #{endpoint.name} failed to start: ", e
+        raise
       end
 
-      # Ensures the durable consumer exists and creates a pull subscription for it.
+      # Creates a pull subscription for the endpoint's durable consumer.
+      #
+      # No stream is passed, so nats-pure resolves the stream from the subject and adds the durable consumer
+      # (using {#consumer_config}) when it does not already exist.
       #
       # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to subscribe to.
       #
       # @return [Object] The JetStream pull subscription.
       def build_subscription(endpoint)
-        ensure_consumer(endpoint)
         @jetstream.pull_subscribe(
           endpoint.subject,
-          endpoint.durable,
-          stream: endpoint.stream,
+          endpoint.durable || endpoint.name,
+          config: consumer_config(endpoint),
         )
-      end
-
-      # Verifies that the durable consumer exists, creating it when missing.
-      #
-      # @param endpoint [NatsJetstreamEndpoint] The endpoint configuration to ensure.
-      #
-      # @return [Object] Consumer metadata from `consumer_info` or `add_consumer`.
-      def ensure_consumer(endpoint)
-        @jetstream.consumer_info(endpoint.stream, endpoint.durable)
-      rescue NATS::JetStream::Error::NotFound
-        @jetstream.add_consumer(endpoint.stream, consumer_config(endpoint))
       end
 
       # Builds the JetStream consumer configuration for an endpoint.
